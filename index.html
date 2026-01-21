@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNG Time Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./src/assets/css/style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            SNG Time Tracker
+            <i class="fas fa-clock"></i>
+        </div>
+
+        <nav class="header-nav">
+            <div class="dashboard-link">
+                    <a href="">Dashboard</a>
+                </div>
+            <div class="user-profile" id="userBtn">
+                <i class="fa-solid fa-circle-user"></i>
+            </div>
+        </nav>
+        
+        <div class="user-menu" id="userMenu">
+            <span style="border-bottom: 1px solid #eee;" id="userSpan"></span>
+            <div id="togglePassword">Alterar Senha</div>
+            <div class="logout" id="logOutBtn">Log out</div>
+        </div>
+    </header>
+
+    <main>
+        <h2>Apontamentos</h2>
+        
+        <div class="controllers">
+            <div class="filters">
+                <button class="filter-btn active" onclick="setFilter(this)">Semana</button>
+                <button class="filter-btn" onclick="setFilter(this)">Mês</button>
+                <button class="filter-btn" onclick="setFilter(this)">Ano</button>
+                <span id="tracksCounter"></span>
+            </div>
+    
+            <div class="add-track">
+                <button class="add-track-btn closed" id="add-track-btn">+ Novo Apontamento</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tarefa</th>
+                        <th>Serviço</th>
+                        <th>ID</th>
+                        <th>Software</th>
+                        <th>Data de abertura</th>
+                        <th>Data de fechamento</th>
+                        <th>Status</th>
+                        <th>Notas</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal-overlay" id="modalForgot">
+            <div class="modal-card">
+                <i class="fa-solid fa-xmark close-modal" onclick="toggleModal(false)"></i>
+                <h3 style="margin-top: 0;">Redefinir Senha</h3>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 20px;">
+                    Preencha os campos abaixo para atualizar seus dados de acesso.
+                </p>
+
+                <form id="forgotForm">
+                    <div class="input-group">
+                        <label>Senha Antiga</label>
+                        <i class="fa-solid fa-key"></i>
+                        <input type="password" placeholder="••••••••" id="reset-old-password">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Nova Senha</label>
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <input type="password" placeholder="Mínimo 8 caracteres" id="reset-new-password" required>
+                    </div>
+
+                    <button type="submit" class="action-btn" id="reset-btn">Atualizar Senha</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modalTrack">
+            <div class="modal-card" style="max-width: 550px;">
+                <i class="fa-solid fa-xmark close-modal" id="closeTrackModal"></i>
+                
+                <div class="modal-header-highlight">
+                    <div class="header-item">
+                        <label>Nome da tarefa:</label>
+                        <h3 id="lbl-task">Nova Tarefa</h3>
+                    </div>
+                    <div class="header-item">
+                        <label>Nome do serviço:</label>
+                        <p id="lbl-service">Selecione uma task para começar</p>
+                    </div>
+                </div>
+
+                <form id="trackForm">
+                    <div class="row-group">
+                        <div class="input-group">
+                            <label>Software</label>
+                            <select id="sw-select" class="modal-select" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label>ID da Tarefa</label>
+                            <select id="ts-select" class="modal-select" disabled required></select>
+                        </div>
+                    </div>
+
+                    <div class="row-group">
+                        <div class="input-group">
+                            <label>Abertura (Data/Hora)</label>
+                            <div class="datetime-row">
+                                <input type="date" id="start-date" required>
+                                <input type="time" id="start-time" required>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Fechamento (Data/Hora)</label>
+                            <div class="datetime-row">
+                                <input type="date" id="end-date" disabled>
+                                <input type="time" id="end-time" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row-group">
+                        <div class="input-group">
+                            <label>Status</label>
+                            <select id="status-select-modal" class="status-select-custom" required disabled>
+                                <option value="1">Aberto</option>
+                                <option value="3">Pausado</option>
+                                <option value="2">Fechado</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="flex: 2;">
+                            <label>Notas</label>
+                            <input type="text" id="track-notes" placeholder="Descreva brevemente...">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="action-btn" id="save-track-btn">Salvar Apontamento</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="alert-container" class="custom-alert">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div class="msg-content">
+                <span class="title" id="alert-title">Erro</span>
+                <span class="desc" id="alert-desc">Mensagem de alerta.</span>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Desenvolvido por SNG Synergroup 2026
+    </footer>
+    
+    <script src="./src/assets/js/index.js"></script>
+</body>
+</html>

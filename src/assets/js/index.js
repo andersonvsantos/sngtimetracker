@@ -1,0 +1,426 @@
+const baseUrl = 'https://sngtimetracker.sng.com.br';
+
+/* ===========================
+   UTILIDADES
+   =========================== */
+
+async function checkAuth() {
+    const token = sessionStorage.getItem("sessionToken");
+
+    if (!token) {
+        window.location.href = "/login.html";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${baseUrl}/auth/validate`, {
+            method: "GET",
+            headers: { 
+                "Authorization": `Bearer ${token}` 
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Token inválido");
+        }
+    } catch (err) {
+        sessionStorage.clear();
+        window.location.href = "/login.html";
+    }
+}
+
+function toggleModal(show) {
+    const modal = document.getElementById('modalForgot');
+    if (modal) modal.style.display = show ? 'flex' : 'none';
+}
+
+function showAlert(message, type = "error") {
+    const alertContainer = document.getElementById("alert-container");
+    const alertTitle = document.getElementById("alert-title");
+    const alertDesc = document.getElementById("alert-desc");
+
+    if (!alertContainer) return;
+
+    alertContainer.classList.toggle("success", type === "success");
+    alertTitle.innerText = type === "success" ? "Sucesso" : "Erro";
+    alertDesc.innerText = message;
+
+    alertContainer.classList.add("show");
+    setTimeout(() => alertContainer.classList.remove("show"), 3000);
+}
+
+/* ===========================
+   API
+   =========================== */
+
+function getUserTimeTracks(userId) {
+    const token = sessionStorage.getItem("sessionToken");
+
+    return fetch(`${baseUrl}/maintenance/user/${userId}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    }).then(res => {
+        if (!res.ok) throw new Error("Erro ao buscar apontamentos");
+        return res.json();
+    });
+}
+
+function getAllSoftwares() {
+    const token = sessionStorage.getItem("sessionToken");
+
+    return fetch(`${baseUrl}/maintenance/softwares`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    }).then(res => {
+        if (!res.ok) throw new Error("Erro ao buscar softwares");
+        return res.json();
+    });
+}
+
+function getAllTasksBySoftware(software) {
+    const token = sessionStorage.getItem("sessionToken");
+
+    return fetch(`${baseUrl}/maintenance/tasksBySoftware/${software}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    }).then(res => {
+        if (!res.ok) throw new Error("Erro ao buscar softwares");
+        return res.json();
+    });
+}
+
+async function toggleNewTimeTrack() {
+    const modal = document.getElementById('modalTrack');
+    const form = document.getElementById('trackForm');
+    
+    // Abrir Modal
+    modal.style.display = 'flex';
+
+    // Seleção de Elementos (Mapeados para o Modal)
+    const softwareSelect = document.getElementById('sw-select');
+    const taskSelect = document.getElementById('ts-select');
+    const taskNameField = document.getElementById('lbl-task');
+    const serviceNameField = document.getElementById('lbl-service');
+    const dataAbertura = document.getElementById('start-date');
+    const horaAbertura = document.getElementById('start-time');
+    const dataFechamento = document.getElementById('end-date');
+    const horaFechamento = document.getElementById('end-time');
+    const statusSelect = document.getElementById('status-select-modal');
+    
+    const statusOptions = {
+        aberto: statusSelect.querySelector('option[value="1"]'),
+        pausado: statusSelect.querySelector('option[value="3"]'),
+        fechado: statusSelect.querySelector('option[value="2"]')
+    };
+
+    // --- REGRAS DE NEGÓCIO ORIGINAIS ---
+
+    function toggleFechamento() {
+        const aberturaOk = dataAbertura.value && horaAbertura.value;
+
+        dataFechamento.disabled = !aberturaOk;
+        horaFechamento.disabled = !aberturaOk;
+
+        if (aberturaOk) {
+            statusSelect.style.display = 'inline-block';
+            statusSelect.value = '1';
+            statusSelect.disabled = true;
+
+            statusOptions.aberto.disabled = false;
+            statusOptions.pausado.disabled = true;
+            statusOptions.fechado.disabled = true;
+        } else {
+            dataFechamento.value = '';
+            horaFechamento.value = '';
+
+            statusSelect.style.display = 'none';
+            statusSelect.value = '';
+            statusSelect.disabled = true;
+        }
+    }
+
+    function checkFechamento() {
+        const fechamentoOk = dataFechamento.value && horaFechamento.value;
+
+        if (fechamentoOk) {
+            statusSelect.disabled = false;
+
+            statusOptions.aberto.disabled = true;
+            statusOptions.pausado.disabled = false;
+            statusOptions.fechado.disabled = false;
+
+            statusSelect.value = '';
+        } else {
+            statusSelect.value = '1';
+            statusSelect.disabled = true;
+
+            statusOptions.aberto.disabled = false;
+            statusOptions.pausado.disabled = true;
+            statusOptions.fechado.disabled = true;
+        }
+    }
+
+    // --- INICIALIZAÇÃO E EVENTOS ---
+
+    // Fechar Modal
+    document.getElementById('closeTrackModal').onclick = () => {
+        modal.style.display = 'none';
+        form.reset();
+        taskNameField.textContent = "Nova Tarefa";
+        serviceNameField.textContent = "Selecione uma task para começar";
+        statusSelect.style.display = 'none';
+    };
+
+    // Softwares
+    const softwares = await getAllSoftwares();
+    softwareSelect.innerHTML = '<option value="">Selecione</option>';
+    softwares.forEach(s =>
+        softwareSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`
+    );
+
+    softwareSelect.addEventListener('change', async () => {
+        const software = softwareSelect.value;
+        taskSelect.innerHTML = '<option value="">Selecione</option>';
+        taskSelect.disabled = true;
+        taskNameField.textContent = 'Nova Tarefa';
+        serviceNameField.textContent = 'Selecione uma task para começar';
+
+        statusSelect.style.display = 'none';
+        statusSelect.value = '';
+        statusSelect.disabled = true;
+
+        if (!software) return;
+
+        const tasks = await getAllTasksBySoftware(software);
+        tasks.forEach(task => {
+            taskSelect.innerHTML += `
+                <option value="${task.id}" data-task-name="${task.taskName}" data-service-name="${task.serviceName}">
+                    ${task.taskId}
+                </option>`;
+        });
+        taskSelect.disabled = false;
+    });
+
+    taskSelect.addEventListener('change', () => {
+        const option = taskSelect.options[taskSelect.selectedIndex];
+        taskNameField.textContent = option?.dataset.taskName || 'Nova Tarefa';
+        serviceNameField.textContent = option?.dataset.serviceName || 'Selecione uma task para começar';
+    });
+
+    // Eventos de Data/Hora (Lógica idêntica à original)
+    dataAbertura.addEventListener('change', toggleFechamento);
+    horaAbertura.addEventListener('change', toggleFechamento);
+
+    dataFechamento.addEventListener('change', () => {
+        if (dataAbertura.value && horaAbertura.value && dataFechamento.value && horaFechamento.value) {
+            const start = new Date(`${dataAbertura.value}T${horaAbertura.value}`);
+            const end = new Date(`${dataFechamento.value}T${horaFechamento.value}`);
+
+            if (end < start) {
+                alert('Data de fechamento não pode ser menor que a abertura');
+                dataFechamento.value = '';
+                horaFechamento.value = '';
+                return;
+            }
+        }
+        checkFechamento();
+    });
+
+    horaFechamento.addEventListener('change', checkFechamento);
+}
+
+/* ===========================
+   LISTAGEM
+   =========================== */
+
+function listUserTimeTracks(tracks) {
+    function formatUTC(dateString) {
+        const d = new Date(dateString);
+
+        return d.toLocaleString('pt-BR', {
+            timeZone: 'UTC'
+        });
+    }
+
+    const tableBody = document.getElementById('tableBody');
+    
+    tableBody.innerHTML = '';
+
+    tracks.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+    tracks.forEach(track => {
+        let statusHtml = '';
+        let actionsHtml = '';
+
+        if (track.status === "1") {
+            statusHtml = '<span class="status opened">Aberto</span>';
+            actionsHtml = `
+                <i class="fas fa-pause" title="Pausar tarefa"></i>
+                <i class="fas fa-flag-checkered" title="Finalizar tarefa"></i>
+                <i class="fa-solid fa-pen-to-square" title="Editar tarefa"></i>
+            `;
+        }
+
+        if (track.status === "3") {
+            statusHtml = '<span class="status paused">Pausado</span>';
+            actionsHtml = `
+                <i class="fas fa-play" title="Iniciar tarefa"></i>
+                <i class="fa-solid fa-pen-to-square" title="Editar tarefa"></i>
+            `;
+        }
+
+        if (track.status === "2") {
+            statusHtml = '<span class="status finished">Finalizado</span>';
+            actionsHtml = `
+                <i class="fas fa-play" title="Iniciar tarefa"></i>
+                <i class="fa-solid fa-pen-to-square" title="Editar tarefa"></i>
+            `;
+        }
+
+        tableBody.innerHTML += `
+            <tr data-id="${track.id}">
+                <td>${track.taskName || '-'}</td>
+                <td>${track.serviceName || '-'}</td>
+                <td>${track.taskId}</td>
+                <td>${track.software || '-'}</td>
+                <td>${formatUTC(track.startTime)}</td>
+                <td>${track.endTime ? formatUTC(track.endTime) : '-'}</td>
+                <td>${statusHtml}</td>
+                <td>${track.notes || '-'}</td>
+                <td class="actions">
+                    <div class="actions-wrapper">
+                        ${actionsHtml}
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+/* ===========================
+   FILTROS DE DATA
+   =========================== */
+
+function formatDate(date) {
+    return date.toLocaleDateString('pt-BR');
+}
+
+function getLastDaysPeriod(days) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    return { start, end };
+}
+
+function updateFilterTitles() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        let days;
+
+        switch (btn.innerText) {
+            case 'Semana': days = 7; break;
+            case 'Mês': days = 30; break;
+            case 'Ano': days = 365; break;
+        }
+
+        if (days) {
+            const { start, end } = getLastDaysPeriod(days);
+            btn.title = `${formatDate(start)} - ${formatDate(end)}`;
+        }
+    });
+}
+
+/* ===========================
+   FILTRO + REFETCH
+   =========================== */
+
+async function setFilter(element) {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.disabled = false;
+    });
+
+    element.classList.add('active');
+    element.disabled = true;
+
+    updateFilterTitles();
+
+    let days;
+    switch (element.innerText) {
+        case 'Semana': days = 7; break;
+        case 'Mês': days = 30; break;
+        case 'Ano': days = 365; break;
+    }
+
+    try {
+        const userId = sessionStorage.getItem("userId");
+        const tracks = await getUserTimeTracks(userId);
+
+        const counter = document.getElementById('tracksCounter');
+
+        const { start, end } = getLastDaysPeriod(days);
+
+        const filteredTracks = tracks.filter(track => {
+            const date = new Date(track.startTime);
+            return date >= start && date <= end;
+        });
+
+        counter.innerHTML = `${filteredTracks.length} apontamentos.`;
+
+        listUserTimeTracks(filteredTracks);
+    } catch (err) {
+        console.error(err);
+        showAlert("Erro ao atualizar os apontamentos");
+    }
+}
+
+/* ===========================
+   INIT
+   =========================== */
+
+document.addEventListener('DOMContentLoaded', async () => {
+    checkAuth();
+
+    const userSpan = document.getElementById("userSpan");
+    const userBtn = document.getElementById('userBtn');
+    const userMenu = document.getElementById('userMenu');
+    const logOutBtn = document.getElementById('logOutBtn');
+    const changePassBtn = document.getElementById('togglePassword');
+    const addNewTimeTrackBtn = document.getElementById('add-track-btn'); 
+
+    if (userSpan) {
+        userSpan.innerText = sessionStorage.getItem("userName") || "Usuário";
+    }
+
+    updateFilterTitles();
+
+    // Inicializa com SEMANA ativa
+    const weekBtn = document.querySelector('.filter-btn');
+    if (weekBtn) {
+        await setFilter(weekBtn);
+    }
+
+    userBtn?.addEventListener('click', e => {
+        e.stopPropagation();
+        userMenu.classList.toggle('active');
+    });
+
+    changePassBtn?.addEventListener('click', e => {
+        e.stopPropagation();
+        userMenu.classList.remove('active');
+        toggleModal(true);
+    });
+
+    logOutBtn?.addEventListener('click', () => {
+        sessionStorage.clear();
+        window.location.href = "./pages/login.html";
+    });
+
+    addNewTimeTrackBtn.addEventListener('click', () => {
+        toggleNewTimeTrack();
+    })
+
+    document.addEventListener('click', () => userMenu.classList.remove('active'));
+});
