@@ -54,7 +54,7 @@ async function login() {
         sessionStorage.setItem("userName", data.user.userName);
         sessionStorage.setItem("userEmail", data.user.userEmail);
         sessionStorage.setItem("sessionToken", data.token);
-        window.location.href = "./src/index.html";
+        window.location.href = "./index.html";
 
     } catch (err) {
         console.error(err);
