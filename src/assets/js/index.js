@@ -418,6 +418,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = "./pages/login.html";
     });
 
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => setFilter(btn));
+    });
+
     addNewTimeTrackBtn.addEventListener('click', () => {
         toggleNewTimeTrack();
     })
