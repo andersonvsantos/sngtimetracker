@@ -352,3 +352,26 @@ footer {
     .modal-header-highlight { grid-template-columns: 1fr; }
     .row-group { flex-direction: column; }
 }
+
+/* Garante que o container das datas ocupe 100% e não deixe nada vazar */
+.datetime-row {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Força os inputs a encolherem e respeitarem o pai */
+.datetime-row input {
+    flex: 1;
+    min-width: 0; /* ESSENCIAL: Remove a largura mínima padrão do navegador */
+    width: 100%;
+    padding: 10px 5px !important; /* Padding lateral menor para ganhar espaço interno */
+    font-size: 0.85rem; /* Leve redução para não quebrar o texto interno */
+}
+
+/* Se houver labels muito longas ou grupos que esticam, garanta o box-sizing */
+.input-group {
+    min-width: 0;
+    flex: 1;
+}
