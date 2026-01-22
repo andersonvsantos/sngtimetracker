@@ -1,4 +1,4 @@
-const baseUrl = 'https://sngtimetracker.sng.com.br';
+let baseUrl = 'https://sngtimetracker.sng.com.br';
 
 /* ===========================
    UTILIDADES
@@ -282,7 +282,7 @@ function listUserTimeTracks(tracks) {
 
         tableBody.innerHTML += `
             <tr data-id="${track.id}">
-                <td>${track.taskName || '-'}</td>
+                <td><a href="${track.url || ""}" target="_blank">${track.taskName || '-'}</a></td>
                 <td>${track.serviceName || '-'}</td>
                 <td>${track.taskId}</td>
                 <td>${track.software || '-'}</td>

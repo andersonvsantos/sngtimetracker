@@ -1,4 +1,4 @@
-const baseUrl = 'https://sngtimetracker.sng.com.br';
+let baseUrl = 'https://sngtimetracker.sng.com.br';
 
 // --- Função de Alerta Global ---
 const showAlert = (message, type = 'error') => {
