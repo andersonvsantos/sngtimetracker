@@ -1,5 +1,4 @@
 let baseUrl = 'https://sngtimetracker.sng.com.br';
-baseUrl = 'http://localhost:3000';
 
 // --- Função de Alerta Global ---
 const showAlert = (message, type = 'error') => {
