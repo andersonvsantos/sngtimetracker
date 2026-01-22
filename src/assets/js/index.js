@@ -13,7 +13,6 @@ $(document).ready(function() {
 });
 
 let baseUrl = 'https://sngtimetracker.sng.com.br';
-baseUrl = 'http://localhost:3000';
 
 /* ===========================
    UTILIDADES
