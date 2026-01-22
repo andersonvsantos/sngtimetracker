@@ -13,6 +13,31 @@ $(document).ready(function() {
 });
 
 let baseUrl = 'https://sngtimetracker.sng.com.br';
+baseUrl = 'http://localhost:3000';
+
+/* ===========================
+   CONSTANTES
+   =========================== */
+
+const userSpan = document.getElementById("userSpan");
+const userBtn = document.getElementById('userBtn');
+const userMenu = document.getElementById('userMenu');
+const logOutBtn = document.getElementById('logOutBtn');
+const changePassBtn = document.getElementById('togglePassword');
+const addNewTimeTrackBtn = document.getElementById('add-track-btn'); 
+const resetCloseBtn = document.getElementById('reset-close-btn');
+const softwareSelect = document.getElementById('sw-select');
+const taskSelect = document.getElementById('ts-select');
+const taskNameField = document.getElementById('lbl-task');
+const serviceNameField = document.getElementById('lbl-service');
+const dataAbertura = document.getElementById('start-date');
+const horaAbertura = document.getElementById('start-time');
+const dataFechamento = document.getElementById('end-date');
+const horaFechamento = document.getElementById('end-time');
+const statusSelect = document.getElementById('status-select-modal');
+const notesInput = document.getElementById('track-notes');
+const saveTimeTrackerBtn = document.getElementById('save-track-btn');
+
 
 /* ===========================
    UTILIDADES
@@ -130,6 +155,14 @@ function getAllTasksBySoftware(software) {
     });
 }
 
+async function saveNewTimeTracker() {
+    // Resultado esperado: "2026-01-15T14:18:00.0000000"
+    const startTime = `${dataAbertura.value}T${horaAbertura.value}:00.0000000`;
+    const endTime = dataFechamento.value && dataFechamento.value ? `${dataFechamento.value}T${horaFechamento.value}:00.0000000`: null;
+    await createNewTimeTrack(sessionStorage.getItem("userId"), taskSelect.value, startTime, endTime, statusSelect.value, notesInput.value);
+    location.reload();
+}
+
 async function toggleNewTimeTrack() {
     const modal = document.getElementById('modalTrack');
     const form = document.getElementById('trackForm');
@@ -138,24 +171,18 @@ async function toggleNewTimeTrack() {
     modal.style.display = 'flex';
 
     // Seleção de Elementos
-    const softwareSelect = document.getElementById('sw-select');
-    const taskSelect = document.getElementById('ts-select');
-    const taskNameField = document.getElementById('lbl-task');
-    const serviceNameField = document.getElementById('lbl-service');
-    const dataAbertura = document.getElementById('start-date');
-    const horaAbertura = document.getElementById('start-time');
-    const dataFechamento = document.getElementById('end-date');
-    const horaFechamento = document.getElementById('end-time');
-    const statusSelect = document.getElementById('status-select-modal');
+    saveTimeTrackerBtn.disabled = true;
+    saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+    saveTimeTrackerBtn.style.cursor = 'not-allowed';
     
     const statusOptions = {
         aberto: statusSelect.querySelector('option[value="1"]'),
         pausado: statusSelect.querySelector('option[value="3"]'),
-        fechado: statusSelect.querySelector('option[value="2"]')
+        finalizado: statusSelect.querySelector('option[value="2"]')
     };
 
     /* ===========================
-       INICIALIZAÇÃO SELECT2
+        INICIALIZAÇÃO SELECT2
     =========================== */
 
     // Reinicializa para evitar bugs de memória ou duplicação
@@ -179,48 +206,134 @@ async function toggleNewTimeTrack() {
     });
 
     /* ===========================
-       REGRAS DE NEGÓCIO
+        REGRAS DE NEGÓCIO
     =========================== */
 
-    function toggleFechamento() {
-        const aberturaOk = dataAbertura.value && horaAbertura.value;
-        dataFechamento.disabled = !aberturaOk;
-        horaFechamento.disabled = !aberturaOk;
 
-        if (aberturaOk) {
-            statusSelect.style.display = 'inline-block';
-            statusSelect.value = '1';
-            statusSelect.disabled = true;
-            statusOptions.aberto.disabled = false;
-            statusOptions.pausado.disabled = true;
-            statusOptions.fechado.disabled = true;
-        } else {
+    function updateClosingState() {
+        const aberturaOk = dataAbertura.value && horaAbertura.value;
+        const fechamentoOk = dataFechamento.value && horaFechamento.value;
+
+        // Estado 1: sem abertura
+        if (!aberturaOk) {
             dataFechamento.value = '';
             horaFechamento.value = '';
+            dataFechamento.disabled = true;
+            horaFechamento.disabled = true;
+
             statusSelect.style.display = 'none';
             statusSelect.value = '';
+            statusSelect.disabled = true;
+
+            statusOptions.aberto.disabled = false;
+            statusOptions.pausado.disabled = true;
+            statusOptions.finalizado.disabled = true;
+            return;
+        }
+
+        // Estado 2: com abertura, sem fechamento
+        if (aberturaOk && !fechamentoOk) {
+            dataFechamento.disabled = false;
+            horaFechamento.disabled = false;
+
+            statusSelect.style.display = 'inline-block';
+            statusSelect.value = '1'; // Aberto
+            statusSelect.disabled = true;
+
+            statusOptions.aberto.disabled = false;
+            statusOptions.pausado.disabled = true;
+            statusOptions.finalizado.disabled = true;
+            return;
+        }
+
+        // Estado 3: com abertura e fechamento
+        if (aberturaOk && fechamentoOk) {
+            dataFechamento.disabled = false;
+            horaFechamento.disabled = false;
+
+            statusSelect.style.display = 'inline-block';
+            statusSelect.disabled = false;
+            statusSelect.value = ''; // força escolha
+
+            statusOptions.aberto.disabled = true;
+            statusOptions.pausado.disabled = false;
+            statusOptions.finalizado.disabled = false;
         }
     }
 
-    function checkFechamento() {
-        const fechamentoOk = dataFechamento.value && horaFechamento.value;
-        if (fechamentoOk) {
-            statusSelect.disabled = false;
-            statusOptions.aberto.disabled = true;
-            statusOptions.pausado.disabled = false;
-            statusOptions.fechado.disabled = false;
-            statusSelect.value = ''; // Força escolha manual
-        } else {
-            statusSelect.value = '1';
-            statusSelect.disabled = true;
-            statusOptions.aberto.disabled = false;
-            statusOptions.pausado.disabled = true;
-            statusOptions.fechado.disabled = true;
+
+    function validateDates() {
+        const dadosAberturaOk =
+            softwareSelect.value &&
+            taskSelect.value &&
+            dataAbertura.value &&
+            horaAbertura.value;
+
+        const temDataFechamento = !!dataFechamento.value;
+        const temHoraFechamento = !!horaFechamento.value;
+
+        const fechamentoParcial =
+            (temDataFechamento && !temHoraFechamento) ||
+            (!temDataFechamento && temHoraFechamento);
+
+        const dadosFechamentoOk = temDataFechamento && temHoraFechamento;
+
+        // Fechamento parcial → inválido
+        if (fechamentoParcial) {
+            saveTimeTrackerBtn.disabled = true;
+            saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+            saveTimeTrackerBtn.style.cursor = 'not-allowed';
+            return false;
         }
+
+        // Fechamento completo SEM status → inválido
+        if (dadosFechamentoOk && !statusSelect.value) {
+            saveTimeTrackerBtn.disabled = true;
+            saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+            saveTimeTrackerBtn.style.cursor = 'not-allowed';
+            return false;
+        }
+
+        // Validação de ordem de datas
+        if (dadosFechamentoOk) {
+            const start = new Date(`${dataAbertura.value}T${horaAbertura.value}`);
+            const end = new Date(`${dataFechamento.value}T${horaFechamento.value}`);
+
+            if (end < start) {
+                showAlert('Data de fechamento não pode ser menor que a abertura');
+                dataFechamento.value = '';
+                horaFechamento.value = '';
+                statusSelect.value = '1';
+                statusSelect.disabled = true;
+
+                saveTimeTrackerBtn.disabled = true;
+                saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+                saveTimeTrackerBtn.style.cursor = 'not-allowed';
+                return false;
+            }
+        }
+
+        // Regra final do botão
+        if (
+            dadosAberturaOk &&
+            (
+                (!temDataFechamento && !temHoraFechamento) || // sem fechamento
+                (dadosFechamentoOk && statusSelect.value != '')               // fechamento completo + status
+            )
+        ) {
+            saveTimeTrackerBtn.disabled = false;
+            saveTimeTrackerBtn.style.backgroundColor = '#007bff';
+            saveTimeTrackerBtn.style.cursor = 'pointer';
+        } else {
+            saveTimeTrackerBtn.disabled = true;
+            saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+            saveTimeTrackerBtn.style.cursor = 'not-allowed';
+        }
+        return true;
     }
 
     /* ===========================
-       EVENTOS E CARREGAMENTO
+        EVENTOS E CARREGAMENTO
     =========================== */
 
     // Fechar Modal
@@ -278,25 +391,41 @@ async function toggleNewTimeTrack() {
         serviceNameField.textContent = data.dataset.serviceName || 'Selecione uma task para começar';
     });
 
-    // Datas e Horas (Nativo)
-    dataAbertura.addEventListener('change', toggleFechamento);
-    horaAbertura.addEventListener('change', toggleFechamento);
-    
-    dataFechamento.addEventListener('change', () => {
-        if (dataAbertura.value && horaAbertura.value && dataFechamento.value && horaFechamento.value) {
-            const start = new Date(`${dataAbertura.value}T${horaAbertura.value}`);
-            const end = new Date(`${dataFechamento.value}T${horaFechamento.value}`);
-            if (end < start) {
-                alert('Data de fechamento não pode ser menor que a abertura');
-                dataFechamento.value = '';
-                horaFechamento.value = '';
-                return;
-            }
-        }
-        checkFechamento();
+    // Mudanças nos Selects (Ajustado para funcionar com Select2)
+    $(taskSelect).on('change', () => {
+        validateDates();
+        updateClosingState();
     });
 
-    horaFechamento.addEventListener('change', checkFechamento);
+    $(softwareSelect).on('change', () => {
+        validateDates();
+        updateClosingState();
+    });
+
+    statusSelect.addEventListener('change', () => {
+        validateDates();
+    });
+
+    // Datas e Horas (Nativo)
+    dataAbertura.addEventListener('change', () => {
+        validateDates();
+        updateClosingState();
+    });
+
+    horaAbertura.addEventListener('change', () => {
+        validateDates();
+        updateClosingState();
+    });
+    
+    dataFechamento.addEventListener('change', () => {
+        validateDates();
+        updateClosingState();
+    });
+
+    horaFechamento.addEventListener('change', () => {
+        validateDates();
+        updateClosingState();
+    });
 }
 
 /* ===========================
@@ -450,14 +579,6 @@ async function setFilter(element) {
 document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
 
-    const userSpan = document.getElementById("userSpan");
-    const userBtn = document.getElementById('userBtn');
-    const userMenu = document.getElementById('userMenu');
-    const logOutBtn = document.getElementById('logOutBtn');
-    const changePassBtn = document.getElementById('togglePassword');
-    const addNewTimeTrackBtn = document.getElementById('add-track-btn'); 
-    const resetCloseBtn = document.getElementById('reset-close-btn');
-
     if (userSpan) {
         userSpan.innerText = sessionStorage.getItem("userName") || "Usuário";
     }
@@ -496,6 +617,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     resetCloseBtn.addEventListener('click', () => {
         toggleModal();
+    });
+
+    saveTimeTrackerBtn.addEventListener('click', async(e) => {
+        e.preventDefault();
+        if(saveTimeTrackerBtn.disabled == false) {
+            statusSelect.value == '' ? showAlert('Por favor selecione um status para salvar!') : saveNewTimeTracker();
+        }
     });
 
     document.addEventListener('click', () => userMenu.classList.remove('active'));
