@@ -1,4 +1,19 @@
+import $ from 'jquery';
+import select2 from 'select2';
+
+// IMPORTANTE: Expõe o jQuery globalmente para os plugins
+window.jQuery = window.$ = $;
+
+// Inicializa o plugin no jQuery global
+select2(); 
+
+$(document).ready(function() {
+    // Agora o .select2() deve existir no objeto jQuery
+    $('#sw-select').select2();
+});
+
 let baseUrl = 'https://sngtimetracker.sng.com.br';
+baseUrl = 'http://localhost:3000';
 
 /* ===========================
    UTILIDADES
@@ -53,6 +68,30 @@ function showAlert(message, type = "error") {
    API
    =========================== */
 
+async function createNewTimeTrack(userId, taskId, startTime, endTime, status, notes) {
+    const response = await fetch(`${baseUrl}/maintenance`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            task_id: taskId,
+            startTime: startTime,
+            endTime: endTime ? endTime : null,
+            status: status,
+            notes: notes
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao salvar o apontamento");
+    }
+
+    return await response.json();
+}
+
 function getUserTimeTracks(userId) {
     const token = sessionStorage.getItem("sessionToken");
 
@@ -99,7 +138,7 @@ async function toggleNewTimeTrack() {
     // Abrir Modal
     modal.style.display = 'flex';
 
-    // Seleção de Elementos (Mapeados para o Modal)
+    // Seleção de Elementos
     const softwareSelect = document.getElementById('sw-select');
     const taskSelect = document.getElementById('ts-select');
     const taskNameField = document.getElementById('lbl-task');
@@ -116,11 +155,36 @@ async function toggleNewTimeTrack() {
         fechado: statusSelect.querySelector('option[value="2"]')
     };
 
-    // --- REGRAS DE NEGÓCIO ORIGINAIS ---
+    /* ===========================
+       INICIALIZAÇÃO SELECT2
+    =========================== */
+
+    // Reinicializa para evitar bugs de memória ou duplicação
+    if ($(softwareSelect).hasClass('select2-hidden-accessible')) {
+        $(softwareSelect).select2('destroy');
+    }
+    if ($(taskSelect).hasClass('select2-hidden-accessible')) {
+        $(taskSelect).select2('destroy');
+    }
+
+    $(softwareSelect).select2({
+        dropdownParent: $('#modalTrack'),
+        placeholder: 'Selecione um software',
+        width: '100%'
+    });
+
+    $(taskSelect).select2({
+        dropdownParent: $('#modalTrack'),
+        placeholder: 'Digite para buscar task',
+        width: '100%'
+    });
+
+    /* ===========================
+       REGRAS DE NEGÓCIO
+    =========================== */
 
     function toggleFechamento() {
         const aberturaOk = dataAbertura.value && horaAbertura.value;
-
         dataFechamento.disabled = !aberturaOk;
         horaFechamento.disabled = !aberturaOk;
 
@@ -128,97 +192,101 @@ async function toggleNewTimeTrack() {
             statusSelect.style.display = 'inline-block';
             statusSelect.value = '1';
             statusSelect.disabled = true;
-
             statusOptions.aberto.disabled = false;
             statusOptions.pausado.disabled = true;
             statusOptions.fechado.disabled = true;
         } else {
             dataFechamento.value = '';
             horaFechamento.value = '';
-
             statusSelect.style.display = 'none';
             statusSelect.value = '';
-            statusSelect.disabled = true;
         }
     }
 
     function checkFechamento() {
         const fechamentoOk = dataFechamento.value && horaFechamento.value;
-
         if (fechamentoOk) {
             statusSelect.disabled = false;
-
             statusOptions.aberto.disabled = true;
             statusOptions.pausado.disabled = false;
             statusOptions.fechado.disabled = false;
-
-            statusSelect.value = '';
+            statusSelect.value = ''; // Força escolha manual
         } else {
             statusSelect.value = '1';
             statusSelect.disabled = true;
-
             statusOptions.aberto.disabled = false;
             statusOptions.pausado.disabled = true;
             statusOptions.fechado.disabled = true;
         }
     }
 
-    // --- INICIALIZAÇÃO E EVENTOS ---
+    /* ===========================
+       EVENTOS E CARREGAMENTO
+    =========================== */
 
     // Fechar Modal
     document.getElementById('closeTrackModal').onclick = () => {
         modal.style.display = 'none';
         form.reset();
-        taskNameField.textContent = "Nova Tarefa";
-        serviceNameField.textContent = "Selecione uma task para começar";
-        statusSelect.style.display = 'none';
+        taskNameField.textContent = 'Nova Tarefa';
+        serviceNameField.textContent = 'Selecione uma task para começar';
+        $(softwareSelect).val(null).trigger('change');
+        $(taskSelect).val(null).trigger('change');
     };
 
-    // Softwares
+    // Carregar Softwares
     const softwares = await getAllSoftwares();
-    softwareSelect.innerHTML = '<option value="">Selecione</option>';
-    softwares.forEach(s =>
-        softwareSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`
-    );
+    let swHTML = '<option value="">Selecione</option>';
+    softwares.forEach(s => swHTML += `<option value="${s.name}">${s.name}</option>`);
+    softwareSelect.innerHTML = swHTML;
+    $(softwareSelect).trigger('change.select2');
 
-    softwareSelect.addEventListener('change', async () => {
-        const software = softwareSelect.value;
+    // Evento Change Software (Select2)
+    $(softwareSelect).off('select2:select').on('select2:select', async function(e) {
+        const software = e.target.value;
+        
+        // Reset campos dependentes
         taskSelect.innerHTML = '<option value="">Selecione</option>';
         taskSelect.disabled = true;
         taskNameField.textContent = 'Nova Tarefa';
         serviceNameField.textContent = 'Selecione uma task para começar';
-
-        statusSelect.style.display = 'none';
-        statusSelect.value = '';
-        statusSelect.disabled = true;
-
-        if (!software) return;
+        
+        if (!software) {
+            $(taskSelect).trigger('change.select2');
+            return;
+        }
 
         const tasks = await getAllTasksBySoftware(software);
+        let taskHTML = '<option value="">Selecione</option>';
         tasks.forEach(task => {
-            taskSelect.innerHTML += `
-                <option value="${task.id}" data-task-name="${task.taskName}" data-service-name="${task.serviceName}">
-                    ${task.taskId}
-                </option>`;
+            taskHTML += `<option value="${task.id}" 
+                            data-task-name="${task.taskName}" 
+                            data-service-name="${task.serviceName}"
+                            title="${task.taskName}">
+                            ${task.taskId}
+                         </option>`;
         });
+        
+        taskSelect.innerHTML = taskHTML;
         taskSelect.disabled = false;
+        $(taskSelect).trigger('change.select2');
     });
 
-    taskSelect.addEventListener('change', () => {
-        const option = taskSelect.options[taskSelect.selectedIndex];
-        taskNameField.textContent = option?.dataset.taskName || 'Nova Tarefa';
-        serviceNameField.textContent = option?.dataset.serviceName || 'Selecione uma task para começar';
+    // Evento Change Task (Select2)
+    $(taskSelect).off('select2:select').on('select2:select', function(e) {
+        const data = e.params.data.element; // Acessa o elemento <option> original
+        taskNameField.textContent = data.dataset.taskName || 'Nova Tarefa';
+        serviceNameField.textContent = data.dataset.serviceName || 'Selecione uma task para começar';
     });
 
-    // Eventos de Data/Hora (Lógica idêntica à original)
+    // Datas e Horas (Nativo)
     dataAbertura.addEventListener('change', toggleFechamento);
     horaAbertura.addEventListener('change', toggleFechamento);
-
+    
     dataFechamento.addEventListener('change', () => {
         if (dataAbertura.value && horaAbertura.value && dataFechamento.value && horaFechamento.value) {
             const start = new Date(`${dataAbertura.value}T${horaAbertura.value}`);
             const end = new Date(`${dataFechamento.value}T${horaFechamento.value}`);
-
             if (end < start) {
                 alert('Data de fechamento não pode ser menor que a abertura');
                 dataFechamento.value = '';
@@ -389,6 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logOutBtn = document.getElementById('logOutBtn');
     const changePassBtn = document.getElementById('togglePassword');
     const addNewTimeTrackBtn = document.getElementById('add-track-btn'); 
+    const resetCloseBtn = document.getElementById('reset-close-btn');
 
     if (userSpan) {
         userSpan.innerText = sessionStorage.getItem("userName") || "Usuário";
@@ -424,7 +493,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     addNewTimeTrackBtn.addEventListener('click', () => {
         toggleNewTimeTrack();
-    })
+    });
+
+    resetCloseBtn.addEventListener('click', () => {
+        toggleModal();
+    });
 
     document.addEventListener('click', () => userMenu.classList.remove('active'));
 });

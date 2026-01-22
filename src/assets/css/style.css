@@ -550,3 +550,22 @@ footer {
     min-width: 0;
     flex: 1;
 }
+
+/* ... (Todo o seu conteúdo anterior do style.css mantido) ... */
+
+.filter-input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    width: 200px;
+    background: #fff url('https://cdn.jsdelivr.net/npm/daterangepicker/calendar.png') no-repeat right 8px center;
+    background-size: 16px;
+}
+
+/* REFORÇO PARA O CALENDÁRIO APARECER */
+.daterangepicker {
+    z-index: 9999 !important;
+}
