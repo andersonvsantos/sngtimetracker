@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     logOutBtn?.addEventListener('click', () => {
         sessionStorage.clear();
-        window.location.href = "./pages/login.html";
+        window.location.href = "/login.html";
     });
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
