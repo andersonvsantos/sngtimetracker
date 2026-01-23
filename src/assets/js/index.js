@@ -180,7 +180,7 @@ async function saveNewTimeTracker() {
     location.reload();
 }
 
-async function toggleNewTimeTrack() {
+async function toggleNewTimeTrack(editData = null) {
     const modal = document.getElementById('modalTrack');
     const form = document.getElementById('trackForm');
     
@@ -226,7 +226,6 @@ async function toggleNewTimeTrack() {
         REGRAS DE NEGÓCIO
     =========================== */
 
-
     function updateClosingState() {
         const aberturaOk = dataAbertura.value && horaAbertura.value;
         const fechamentoOk = dataFechamento.value && horaFechamento.value;
@@ -270,14 +269,15 @@ async function toggleNewTimeTrack() {
 
             statusSelect.style.display = 'inline-block';
             statusSelect.disabled = false;
-            statusSelect.value = ''; // força escolha
+            
+            // Se for novo track, força escolha. Se for edição, mantém o que veio.
+            if(!editData) statusSelect.value = ''; 
 
             statusOptions.aberto.disabled = true;
             statusOptions.pausado.disabled = false;
             statusOptions.finalizado.disabled = false;
         }
     }
-
 
     function validateDates() {
         const dadosAberturaOk =
@@ -335,7 +335,7 @@ async function toggleNewTimeTrack() {
             dadosAberturaOk &&
             (
                 (!temDataFechamento && !temHoraFechamento) || // sem fechamento
-                (dadosFechamentoOk && statusSelect.value != '')               // fechamento completo + status
+                (dadosFechamentoOk && statusSelect.value != '') // fechamento completo + status
             )
         ) {
             saveTimeTrackerBtn.disabled = false;
@@ -359,7 +359,7 @@ async function toggleNewTimeTrack() {
         form.reset();
         taskNameField.textContent = 'Nova Tarefa';
         serviceNameField.textContent = 'Selecione uma task para começar';
-        $(softwareSelect).val(null).trigger('change');
+        $(softwareSelect).val(null).trigger('change').prop('disabled', false); // Reabilita software ao fechar
         $(taskSelect).val(null).trigger('change');
     };
 
@@ -403,7 +403,7 @@ async function toggleNewTimeTrack() {
 
     // Evento Change Task (Select2)
     $(taskSelect).off('select2:select').on('select2:select', function(e) {
-        const data = e.params.data.element; // Acessa o elemento <option> original
+        const data = e.params.data.element; 
         taskNameField.textContent = data.dataset.taskName || 'Nova Tarefa';
         serviceNameField.textContent = data.dataset.serviceName || 'Selecione uma task para começar';
     });
@@ -424,25 +424,72 @@ async function toggleNewTimeTrack() {
     });
 
     // Datas e Horas (Nativo)
-    dataAbertura.addEventListener('change', () => {
-        validateDates();
-        updateClosingState();
+    [dataAbertura, horaAbertura, dataFechamento, horaFechamento].forEach(el => {
+        el.addEventListener('change', () => {
+            validateDates();
+            updateClosingState();
+        });
     });
 
-    horaAbertura.addEventListener('change', () => {
-        validateDates();
-        updateClosingState();
-    });
-    
-    dataFechamento.addEventListener('change', () => {
-        validateDates();
-        updateClosingState();
-    });
+    /* ===========================
+        LÓGICA DE PREENCHIMENTO DE EDIÇÃO
+    =========================== */
+    if (editData) {
+        // Bloqueia troca de software
+        $(softwareSelect).val(editData.software).trigger('change');
+        softwareSelect.disabled = true;
+        $(softwareSelect).next('.select2-container').css('pointer-events', 'none');
 
-    horaFechamento.addEventListener('change', () => {
-        validateDates();
-        updateClosingState();
-    });
+        // Carregar tasks do software para que o Select2 possa selecionar o ID correto
+        const tasks = await getAllTasksBySoftware(editData.software);
+        let taskHTML = '<option value="">Selecione</option>';
+        tasks.forEach(t => {
+            taskHTML += `<option value="${t.id}" data-task-name="${t.taskName}" data-service-name="${t.serviceName}">${t.taskId}</option>`;
+        });
+        taskSelect.innerHTML = taskHTML;
+        taskSelect.disabled = false;
+        
+        // Seleciona a task e atualiza labels
+        $(taskSelect).val(editData.taskIdValue).trigger('change');
+        const opt = taskSelect.options[taskSelect.selectedIndex];
+        if(opt) {
+            taskNameField.textContent = opt.dataset.taskName;
+            serviceNameField.textContent = opt.dataset.serviceName;
+        }
+
+        // Preenche tempos (YYYY-MM-DD e HH:mm)
+        dataAbertura.value = editData.startTime.split('T')[0];
+        horaAbertura.value = editData.startTime.split('T')[1].substring(0, 5);
+        
+        if (editData.endTime && editData.endTime !== "null") {
+            dataFechamento.value = editData.endTime.split('T')[0];
+            horaFechamento.value = editData.endTime.split('T')[1].substring(0, 5);
+        }
+
+        notesInput.value = editData.notes || '';
+        statusSelect.value = editData.status;
+
+        // Sobrescreve o clique do botão para EDITAR
+        saveTimeTrackerBtn.onclick = async (e) => {
+            e.preventDefault();
+            const start = `${dataAbertura.value}T${horaAbertura.value}:00.000`;
+            const end = dataFechamento.value ? `${dataFechamento.value}T${horaFechamento.value}:00.000` : null;
+            await pauseFinishTimeTrack(editData.id, taskSelect.value, start, end, statusSelect.value, notesInput.value);
+            location.reload();
+        };
+    } else {
+        // Modo criação: garante comportamento original de salvamento
+        saveTimeTrackerBtn.onclick = async (e) => {
+            e.preventDefault();
+            if(!saveTimeTrackerBtn.disabled) {
+                statusSelect.value == '' ? showAlert('Por favor selecione um status!') : saveNewTimeTracker();
+            }
+        };
+    }
+
+    // Execução inicial para aplicar regras de "Estado" baseadas nos dados carregados
+    validateDates();
+    updateClosingState();
 }
 
 /* ===========================
@@ -636,13 +683,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleModal();
     });
 
-    saveTimeTrackerBtn.addEventListener('click', async(e) => {
-        e.preventDefault();
-        if(saveTimeTrackerBtn.disabled == false) {
-            statusSelect.value == '' ? showAlert('Por favor selecione um status para salvar!') : saveNewTimeTracker();
-        }
-    });
-
     tableBody.addEventListener('click', async (e) => {
         // Busca o ícone clicado ou o elemento pai caso clique na bordinha do ícone
         const icon = e.target.closest('i');
@@ -702,8 +742,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         } 
         
         else if (icon.classList.contains('fa-pen-to-square')) {
-            console.log('Editando ID:', trackId);
-            // Lógica para abrir o modal de edição com os dados da 'row'
+            const row = icon.closest('tr');
+            
+            // Coleta os dados da linha para o modal
+            const dataToEdit = {
+                id: row.getAttribute('data-timetrack-id'),
+                taskIdValue: row.querySelector('[data-task-id]').getAttribute('data-task-id'),
+                software: row.cells[3].innerText, // Pega o texto da coluna Software
+                startTime: row.querySelector('[data-start-time]').getAttribute('data-start-time'),
+                endTime: row.querySelector('[data-end-time]').getAttribute('data-end-time'),
+                notes: row.querySelector('[data-notes]').getAttribute('data-notes'),
+                status: row.querySelector('.status').classList.contains('opened') ? "1" : 
+                        row.querySelector('.status').classList.contains('finished') ? "2" : "3"
+            };
+
+            toggleNewTimeTrack(dataToEdit);
         }
     });
 
