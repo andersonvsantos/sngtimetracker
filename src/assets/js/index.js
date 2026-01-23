@@ -18,6 +18,7 @@ let baseUrl = 'https://sngtimetracker.sng.com.br';
    CONSTANTES
    =========================== */
 
+const tableBody = document.getElementById('tableBody');
 const userSpan = document.getElementById("userSpan");
 const userBtn = document.getElementById('userBtn');
 const userMenu = document.getElementById('userMenu');
@@ -36,7 +37,6 @@ const horaFechamento = document.getElementById('end-time');
 const statusSelect = document.getElementById('status-select-modal');
 const notesInput = document.getElementById('track-notes');
 const saveTimeTrackerBtn = document.getElementById('save-track-btn');
-
 
 /* ===========================
    UTILIDADES
@@ -113,6 +113,24 @@ async function createNewTimeTrack(userId, taskId, startTime, endTime, status, no
     }
 
     return await response.json();
+}
+
+async function pauseFinishTimeTrack(timeTrackId, taskId, startTime, endTime, status, notes) {
+    const response = await fetch(`${baseUrl}/maintenance`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            id: timeTrackId,
+            task_id: taskId,
+            startTime,
+            endTime,
+            status,
+            notes
+        })
+    }
+    )
 }
 
 function getUserTimeTracks(userId) {
@@ -476,15 +494,15 @@ function listUserTimeTracks(tracks) {
         }
 
         tableBody.innerHTML += `
-            <tr data-id="${track.id}">
+            <tr data-timetrack-id="${track.id}">
                 <td><a href="${track.url || ""}" target="_blank">${track.taskName || '-'}</a></td>
                 <td>${track.serviceName || '-'}</td>
-                <td>${track.taskId}</td>
+                <td data-task-id="${track.task_id}">${track.taskId}</td>
                 <td>${track.software || '-'}</td>
-                <td>${formatUTC(track.startTime)}</td>
-                <td>${track.endTime ? formatUTC(track.endTime) : '-'}</td>
+                <td data-start-time="${track.startTime}">${formatUTC(track.startTime)}</td>
+                <td data-end-time="${track.endTime}">${track.endTime ? formatUTC(track.endTime) : '-'}</td>
                 <td>${statusHtml}</td>
-                <td>${track.notes || '-'}</td>
+                <td data-notes="${track.notes}">${track.notes || '-'}</td>
                 <td class="actions">
                     <div class="actions-wrapper">
                         ${actionsHtml}
@@ -622,6 +640,70 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         if(saveTimeTrackerBtn.disabled == false) {
             statusSelect.value == '' ? showAlert('Por favor selecione um status para salvar!') : saveNewTimeTracker();
+        }
+    });
+
+    tableBody.addEventListener('click', async (e) => {
+        // Busca o ícone clicado ou o elemento pai caso clique na bordinha do ícone
+        const icon = e.target.closest('i');
+        if (!icon) return;
+
+        // Busca a linha (tr) correspondente para pegar os dados
+        const row = icon.closest('tr');
+        const trackId = row.getAttribute('data-timetrack-id');
+        const taskId = row.querySelector('[data-task-id]').getAttribute('data-task-id');
+        const startTime = row.querySelector('[data-start-time]').getAttribute('data-start-time');
+        const endTime = row.querySelector('[data-end-time]').getAttribute('data-end-time');
+        const notes = row.querySelector('[data-notes]').getAttribute('data-notes');
+
+        const currentTime = new Date();
+        
+        // Formata manualmente para o padrão local (YYYY-MM-DD HH:mm:ss)
+        const ano = currentTime.getFullYear();
+        const mes = String(currentTime.getMonth() + 1).padStart(2, '0');
+        const dia = String(currentTime.getDate()).padStart(2, '0');
+        const hora = String(currentTime.getHours()).padStart(2, '0');
+        const min = String(currentTime.getMinutes()).padStart(2, '0');
+        const seg = String(currentTime.getSeconds()).padStart(2, '0');
+
+        const localTime = `${ano}-${mes}-${dia}T${hora}:${min}:${seg}.000`;
+
+        if (icon.classList.contains('fa-pause')) {
+            try {
+                await pauseFinishTimeTrack(trackId, taskId, startTime, localTime, "3", notes);
+                showAlert("Tarefa pausada com sucesso!", "success");
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                console.error(err);
+                showAlert("Erro ao pausar tarefa.");
+            }
+        }
+        
+        else if (icon.classList.contains('fa-flag-checkered')) {
+            try {
+                await pauseFinishTimeTrack(trackId, taskId, startTime, localTime, "2", notes);
+                showAlert("Tarefa finalizada com sucesso!", "success");
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                console.error(err);
+                showAlert("Erro ao finalizar tarefa.");
+            }
+        } 
+        
+        else if (icon.classList.contains('fa-play')) {
+            try {
+                await createNewTimeTrack(sessionStorage.getItem("userId"), taskId, localTime, null, "1", '');
+                showAlert("Tarefa iniciada com sucesso!", "success");
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                console.error(err);
+                showAlert("Erro ao iniciar tarefa.");
+            }
+        } 
+        
+        else if (icon.classList.contains('fa-pen-to-square')) {
+            console.log('Editando ID:', trackId);
+            // Lógica para abrir o modal de edição com os dados da 'row'
         }
     });
 
