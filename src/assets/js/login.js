@@ -55,7 +55,7 @@ async function login() {
         Cookies.set("userId", data.user.id, { expires: 30 });
         Cookies.set("userName", data.user.userName, { expires: 30 });
         Cookies.set("userEmail", data.user.userEmail, { expires: 30 });
-        Cookies.set("sessionToken", data.token, { expires: 30 });
+        Cookies.set("token", data.token, { expires: 30 });
         window.location.href = "./index.html";
 
     } catch (err) {

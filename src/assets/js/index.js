@@ -85,7 +85,7 @@ function clearCookies() {
 }
 
 async function checkAuth() {
-    const token = Cookies.get("sessionToken");
+    const token = Cookies.get("token");
 
     if (!token) {
         window.location.href = "/login.html";
@@ -171,7 +171,7 @@ async function pauseFinishTimeTrack(timeTrackId, taskId, startTime, endTime, sta
 }
 
 function getUserTimeTracks(userId) {
-    const token = Cookies.get("sessionToken");
+    const token = Cookies.get("token");
 
     return fetch(`${baseUrl}/maintenance/user/${userId}`, {
         headers: {
@@ -184,7 +184,7 @@ function getUserTimeTracks(userId) {
 }
 
 function getAllSoftwares() {
-    const token = Cookies.get("sessionToken");
+    const token = Cookies.get("token");
 
     return fetch(`${baseUrl}/maintenance/softwares`, {
         headers: {
@@ -197,7 +197,7 @@ function getAllSoftwares() {
 }
 
 function getAllTasksBySoftware(software) {
-    const token = Cookies.get("sessionToken");
+    const token = Cookies.get("token");
 
     return fetch(`${baseUrl}/maintenance/tasksBySoftware/${software}`, {
         headers: {
