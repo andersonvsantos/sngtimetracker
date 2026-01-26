@@ -1,10 +1,11 @@
+import Cookies from 'js-cookie';
 import { selectors } from './constants';
 
 export function toggleModal(show) {
     if (selectors.modalForgot) selectors.modalForgot.style.display = show ? 'flex' : 'none';
 }
 
-function showAlert(message, type = "error") {
+export function showAlert(message, type = "error") {
     if (!selectors.alertContainer) return;
 
     selectors.alertContainer.classList.toggle("success", type === "success");
@@ -13,4 +14,12 @@ function showAlert(message, type = "error") {
 
     selectors.alertContainer.classList.add("show");
     setTimeout(() => selectors.alertContainer.classList.remove("show"), 3000);
+}
+
+export function clearCookies() {
+    const allCookies = Cookies.get();
+
+    Object.keys(allCookies).forEach(cookieName => {
+        Cookies.remove(cookieName);
+    });
 }

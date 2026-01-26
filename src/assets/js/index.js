@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.css";
 import { baseUrl, selectors } from './constants';
+import { showAlert, toggleModal, clearCookies } from './utils';
 
 // IMPORTANTE: Expõe o jQuery globalmente para os plugins
 window.jQuery = window.$ = $;
@@ -76,14 +77,6 @@ async function executarFiltroCustomizado(start, end) {
     }
 }
 
-function clearCookies() {
-    const allCookies = Cookies.get();
-
-    Object.keys(allCookies).forEach(cookieName => {
-        Cookies.remove(cookieName);
-    });
-}
-
 async function checkAuth() {
     const token = Cookies.get("token");
 
@@ -107,21 +100,6 @@ async function checkAuth() {
         clearCookies();
         window.location.href = "/login.html";
     }
-}
-
-function toggleModal(show) {
-    if (selectors.modalForgot) selectors.modalForgot.style.display = show ? 'flex' : 'none';
-}
-
-function showAlert(message, type = "error") {
-    if (!selectors.alertContainer) return;
-
-    selectors.alertContainer.classList.toggle("success", type === "success");
-    selectors.alertTitle.innerText = type === "success" ? "Sucesso" : "Erro";
-    selectors.alertDesc.innerText = message;
-
-    selectors.alertContainer.classList.add("show");
-    setTimeout(() => selectors.alertContainer.classList.remove("show"), 3000);
 }
 
 /* ===========================
