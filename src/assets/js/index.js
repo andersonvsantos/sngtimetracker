@@ -3,6 +3,7 @@ import select2 from 'select2';
 import Cookies from 'js-cookie';
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.css";
+import { baseUrl, selectors } from './constants';
 
 // IMPORTANTE: Expõe o jQuery globalmente para os plugins
 window.jQuery = window.$ = $;
@@ -15,42 +16,14 @@ $(document).ready(function() {
     $('#sw-select').select2();
 });
 
-let baseUrl = 'https://sngtimetracker.sng.com.br';
-
-/* ===========================
-   CONSTANTES
-   =========================== */
-
-const tableBody = document.getElementById('tableBody');
-const userSpan = document.getElementById("userSpan");
-const userBtn = document.getElementById('userBtn');
-const userMenu = document.getElementById('userMenu');
-const logOutBtn = document.getElementById('logOutBtn');
-const changePassBtn = document.getElementById('togglePassword');
-const addNewTimeTrackBtn = document.getElementById('add-track-btn'); 
-const resetCloseBtn = document.getElementById('reset-close-btn');
-const softwareSelect = document.getElementById('sw-select');
-const taskSelect = document.getElementById('ts-select');
-const taskNameField = document.getElementById('lbl-task');
-const serviceNameField = document.getElementById('lbl-service');
-const dataAbertura = document.getElementById('start-date');
-const horaAbertura = document.getElementById('start-time');
-const dataFechamento = document.getElementById('end-date');
-const horaFechamento = document.getElementById('end-time');
-const statusSelect = document.getElementById('status-select-modal');
-const notesInput = document.getElementById('track-notes');
-const saveTimeTrackerBtn = document.getElementById('save-track-btn');
-
 /* ===========================
    UTILIDADES
    =========================== */
 
 function initRangePicker() {
-    const rangeBtn = document.getElementById("range-picker-btn");
-    const rangeLabel = document.getElementById('range-label');
-    if (!rangeBtn) return;
+    if (!selectors.rangeBtn) return;
 
-    flatpickr(rangeBtn, {
+    flatpickr(selectors.rangeBtn, {
         mode: "range",
         dateFormat: "d/m/Y",
         showMonths: 2,
@@ -58,15 +31,15 @@ function initRangePicker() {
         disableMobile: true,
         onClose: function(selectedDates, dateStr) {
             if (selectedDates.length === 2) {
-                if (rangeLabel) rangeLabel.innerText = dateStr;
+                if (selectors.rangeLabel) selectors.rangeLabel.innerText = dateStr;
                 
                 document.querySelectorAll('.filter-btn').forEach(btn => {
                     btn.classList.remove('active');
                     btn.disabled = false;
                 });
 
-                rangeBtn.classList.add('active');
-                rangeBtn.disabled = false; 
+                selectors.rangeBtn.classList.add('active');
+                selectors.rangeBtn.disabled = false; 
 
                 const [start, end] = selectedDates;
                 executarFiltroCustomizado(start, end);
@@ -94,9 +67,7 @@ async function executarFiltroCustomizado(start, end) {
             return trackDate >= startDate && trackDate <= endDate;
         });
 
-        // Só atualiza o DOM após o filtro estar pronto
-        const counter = document.getElementById('tracksCounter');
-        if (counter) counter.innerHTML = `${filteredTracks.length} apontamentos.`;
+        if (selectors.counter) selectors.counter.innerHTML = `${filteredTracks.length} apontamentos.`;
         
         listUserTimeTracks(filteredTracks);
     } catch (err) {
@@ -139,23 +110,18 @@ async function checkAuth() {
 }
 
 function toggleModal(show) {
-    const modal = document.getElementById('modalForgot');
-    if (modal) modal.style.display = show ? 'flex' : 'none';
+    if (selectors.modalForgot) selectors.modalForgot.style.display = show ? 'flex' : 'none';
 }
 
 function showAlert(message, type = "error") {
-    const alertContainer = document.getElementById("alert-container");
-    const alertTitle = document.getElementById("alert-title");
-    const alertDesc = document.getElementById("alert-desc");
+    if (!selectors.alertContainer) return;
 
-    if (!alertContainer) return;
+    selectors.alertContainer.classList.toggle("success", type === "success");
+    selectors.alertTitle.innerText = type === "success" ? "Sucesso" : "Erro";
+    selectors.alertDesc.innerText = message;
 
-    alertContainer.classList.toggle("success", type === "success");
-    alertTitle.innerText = type === "success" ? "Sucesso" : "Erro";
-    alertDesc.innerText = message;
-
-    alertContainer.classList.add("show");
-    setTimeout(() => alertContainer.classList.remove("show"), 3000);
+    selectors.alertContainer.classList.add("show");
+    setTimeout(() => selectors.alertContainer.classList.remove("show"), 3000);
 }
 
 /* ===========================
@@ -245,28 +211,26 @@ function getAllTasksBySoftware(software) {
 
 async function saveNewTimeTracker() {
     // Resultado esperado: "2026-01-15T14:18:00.0000000"
-    const startTime = `${dataAbertura.value}T${horaAbertura.value}:00.0000000`;
-    const endTime = dataFechamento.value && dataFechamento.value ? `${dataFechamento.value}T${horaFechamento.value}:00.0000000`: null;
-    await createNewTimeTrack(Cookies.get("userId"), taskSelect.value, startTime, endTime, statusSelect.value, notesInput.value);
+    const startTime = `${selectors.openingDate.value}T${selectors.openingHour.value}:00.0000000`;
+    const endTime = selectors.closingDate.value && selectors.closingDate.value ? `${selectors.closingDate.value}T${selectors.closingHour.value}:00.0000000`: null;
+    await createNewTimeTrack(Cookies.get("userId"), selectors.taskSelect.value, startTime, endTime, selectors.statusSelect.value, selectors.notesInput.value);
     location.reload();
 }
 
 async function toggleNewTimeTrack(editData = null) {
-    const modal = document.getElementById('modalTrack');
-    const form = document.getElementById('trackForm');
     
     // Abrir Modal
-    modal.style.display = 'flex';
+    selectors.modalTrack.style.display = 'flex';
 
     // Seleção de Elementos
-    saveTimeTrackerBtn.disabled = true;
-    saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
-    saveTimeTrackerBtn.style.cursor = 'not-allowed';
+    selectors.saveTimeTrackerBtn.disabled = true;
+    selectors.saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+    selectors.saveTimeTrackerBtn.style.cursor = 'not-allowed';
     
     const statusOptions = {
-        aberto: statusSelect.querySelector('option[value="1"]'),
-        pausado: statusSelect.querySelector('option[value="3"]'),
-        finalizado: statusSelect.querySelector('option[value="2"]')
+        aberto: selectors.statusSelect.querySelector('option[value="1"]'),
+        pausado: selectors.statusSelect.querySelector('option[value="3"]'),
+        finalizado: selectors.statusSelect.querySelector('option[value="2"]')
     };
 
     /* ===========================
@@ -274,20 +238,20 @@ async function toggleNewTimeTrack(editData = null) {
     =========================== */
 
     // Reinicializa para evitar bugs de memória ou duplicação
-    if ($(softwareSelect).hasClass('select2-hidden-accessible')) {
-        $(softwareSelect).select2('destroy');
+    if ($(selectors.softwareSelect).hasClass('select2-hidden-accessible')) {
+        $(selectors.softwareSelect).select2('destroy');
     }
-    if ($(taskSelect).hasClass('select2-hidden-accessible')) {
-        $(taskSelect).select2('destroy');
+    if ($(selectors.taskSelect).hasClass('select2-hidden-accessible')) {
+        $(selectors.taskSelect).select2('destroy');
     }
 
-    $(softwareSelect).select2({
+    $(selectors.softwareSelect).select2({
         dropdownParent: $('#modalTrack'),
         placeholder: 'Selecione um software',
         width: '100%'
     });
 
-    $(taskSelect).select2({
+    $(selectors.taskSelect).select2({
         dropdownParent: $('#modalTrack'),
         placeholder: 'Digite para buscar task',
         width: '100%'
@@ -298,19 +262,19 @@ async function toggleNewTimeTrack(editData = null) {
     =========================== */
 
     function updateClosingState() {
-        const aberturaOk = dataAbertura.value && horaAbertura.value;
-        const fechamentoOk = dataFechamento.value && horaFechamento.value;
+        const aberturaOk = selectors.openingDate.value && selectors.openingHour.value;
+        const fechamentoOk = selectors.closingDate.value && selectors.closingHour.value;
 
         // Estado 1: sem abertura
         if (!aberturaOk) {
-            dataFechamento.value = '';
-            horaFechamento.value = '';
-            dataFechamento.disabled = true;
-            horaFechamento.disabled = true;
+            selectors.closingDate.value = '';
+            selectors.closingHour.value = '';
+            selectors.closingDate.disabled = true;
+            selectors.closingHour.disabled = true;
 
-            statusSelect.style.display = 'none';
-            statusSelect.value = '';
-            statusSelect.disabled = true;
+            selectors.statusSelect.style.display = 'none';
+            selectors.statusSelect.value = '';
+            selectors.statusSelect.disabled = true;
 
             statusOptions.aberto.disabled = false;
             statusOptions.pausado.disabled = true;
@@ -320,12 +284,12 @@ async function toggleNewTimeTrack(editData = null) {
 
         // Estado 2: com abertura, sem fechamento
         if (aberturaOk && !fechamentoOk) {
-            dataFechamento.disabled = false;
-            horaFechamento.disabled = false;
+            selectors.closingDate.disabled = false;
+            selectors.closingHour.disabled = false;
 
-            statusSelect.style.display = 'inline-block';
-            statusSelect.value = '1'; // Aberto
-            statusSelect.disabled = true;
+            selectors.statusSelect.style.display = 'inline-block';
+            selectors.statusSelect.value = '1'; // Aberto
+            selectors.statusSelect.disabled = true;
 
             statusOptions.aberto.disabled = false;
             statusOptions.pausado.disabled = true;
@@ -335,14 +299,14 @@ async function toggleNewTimeTrack(editData = null) {
 
         // Estado 3: com abertura e fechamento
         if (aberturaOk && fechamentoOk) {
-            dataFechamento.disabled = false;
-            horaFechamento.disabled = false;
+            selectors.closingDate.disabled = false;
+            selectors.closingHour.disabled = false;
 
-            statusSelect.style.display = 'inline-block';
-            statusSelect.disabled = false;
+            selectors.statusSelect.style.display = 'inline-block';
+            selectors.statusSelect.disabled = false;
             
             // Se for novo track, força escolha. Se for edição, mantém o que veio.
-            if(!editData) statusSelect.value = ''; 
+            if(!editData) selectors.statusSelect.value = ''; 
 
             statusOptions.aberto.disabled = true;
             statusOptions.pausado.disabled = false;
@@ -352,13 +316,13 @@ async function toggleNewTimeTrack(editData = null) {
 
     function validateDates() {
         const dadosAberturaOk =
-            softwareSelect.value &&
-            taskSelect.value &&
-            dataAbertura.value &&
-            horaAbertura.value;
+            selectors.softwareSelect.value &&
+            selectors.taskSelect.value &&
+            selectors.openingDate.value &&
+            selectors.openingHour.value;
 
-        const temDataFechamento = !!dataFechamento.value;
-        const temHoraFechamento = !!horaFechamento.value;
+        const temDataFechamento = !!selectors.closingDate.value;
+        const temHoraFechamento = !!selectors.closingHour.value;
 
         const fechamentoParcial =
             (temDataFechamento && !temHoraFechamento) ||
@@ -368,35 +332,35 @@ async function toggleNewTimeTrack(editData = null) {
 
         // Fechamento parcial → inválido
         if (fechamentoParcial) {
-            saveTimeTrackerBtn.disabled = true;
-            saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
-            saveTimeTrackerBtn.style.cursor = 'not-allowed';
+            selectors.saveTimeTrackerBtn.disabled = true;
+            selectors.saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+            selectors.saveTimeTrackerBtn.style.cursor = 'not-allowed';
             return false;
         }
 
         // Fechamento completo SEM status → inválido
-        if (dadosFechamentoOk && !statusSelect.value) {
-            saveTimeTrackerBtn.disabled = true;
-            saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
-            saveTimeTrackerBtn.style.cursor = 'not-allowed';
+        if (dadosFechamentoOk && !selectors.statusSelect.value) {
+            selectors.saveTimeTrackerBtn.disabled = true;
+            selectors.saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+            selectors.saveTimeTrackerBtn.style.cursor = 'not-allowed';
             return false;
         }
 
         // Validação de ordem de datas
         if (dadosFechamentoOk) {
-            const start = new Date(`${dataAbertura.value}T${horaAbertura.value}`);
-            const end = new Date(`${dataFechamento.value}T${horaFechamento.value}`);
+            const start = new Date(`${selectors.openingDate.value}T${selectors.openingHour.value}`);
+            const end = new Date(`${selectors.closingDate.value}T${selectors.closingHour.value}`);
 
             if (end < start) {
                 showAlert('Data de fechamento não pode ser menor que a abertura');
-                dataFechamento.value = '';
-                horaFechamento.value = '';
-                statusSelect.value = '1';
-                statusSelect.disabled = true;
+                selectors.closingDate.value = '';
+                selectors.closingHour.value = '';
+                selectors.statusSelect.value = '1';
+                selectors.statusSelect.disabled = true;
 
-                saveTimeTrackerBtn.disabled = true;
-                saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
-                saveTimeTrackerBtn.style.cursor = 'not-allowed';
+                selectors.saveTimeTrackerBtn.disabled = true;
+                selectors.saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+                selectors.saveTimeTrackerBtn.style.cursor = 'not-allowed';
                 return false;
             }
         }
@@ -406,16 +370,16 @@ async function toggleNewTimeTrack(editData = null) {
             dadosAberturaOk &&
             (
                 (!temDataFechamento && !temHoraFechamento) || // sem fechamento
-                (dadosFechamentoOk && statusSelect.value != '') // fechamento completo + status
+                (dadosFechamentoOk && selectors.statusSelect.value != '') // fechamento completo + status
             )
         ) {
-            saveTimeTrackerBtn.disabled = false;
-            saveTimeTrackerBtn.style.backgroundColor = '#007bff';
-            saveTimeTrackerBtn.style.cursor = 'pointer';
+            selectors.saveTimeTrackerBtn.disabled = false;
+            selectors.saveTimeTrackerBtn.style.backgroundColor = '#007bff';
+            selectors.saveTimeTrackerBtn.style.cursor = 'pointer';
         } else {
-            saveTimeTrackerBtn.disabled = true;
-            saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
-            saveTimeTrackerBtn.style.cursor = 'not-allowed';
+            selectors.saveTimeTrackerBtn.disabled = true;
+            selectors.saveTimeTrackerBtn.style.backgroundColor = '#0054ad';
+            selectors.saveTimeTrackerBtn.style.cursor = 'not-allowed';
         }
         return true;
     }
@@ -425,34 +389,34 @@ async function toggleNewTimeTrack(editData = null) {
     =========================== */
 
     // Fechar Modal
-    document.getElementById('closeTrackModal').onclick = () => {
-        modal.style.display = 'none';
-        form.reset();
-        taskNameField.textContent = 'Nova Tarefa';
-        serviceNameField.textContent = 'Selecione uma task para começar';
-        $(softwareSelect).val(null).trigger('change').prop('disabled', false); // Reabilita software ao fechar
-        $(taskSelect).val(null).trigger('change');
+    document.getElementById('closemodalTrack').onclick = () => {
+        selectors.modalTrack.style.display = 'none';
+        selectors.trackForm.reset();
+        selectors.taskNameField.textContent = 'Nova Tarefa';
+        selectors.serviceNameField.textContent = 'Selecione uma task para começar';
+        $(selectors.softwareSelect).val(null).trigger('change').prop('disabled', false); // Reabilita software ao fechar
+        $(selectors.taskSelect).val(null).trigger('change');
     };
 
     // Carregar Softwares
     const softwares = await getAllSoftwares();
     let swHTML = '<option value="">Selecione</option>';
     softwares.forEach(s => swHTML += `<option value="${s.name}">${s.name}</option>`);
-    softwareSelect.innerHTML = swHTML;
-    $(softwareSelect).trigger('change.select2');
+    selectors.softwareSelect.innerHTML = swHTML;
+    $(selectors.softwareSelect).trigger('change.select2');
 
     // Evento Change Software (Select2)
-    $(softwareSelect).off('select2:select').on('select2:select', async function(e) {
+    $(selectors.softwareSelect).off('select2:select').on('select2:select', async function(e) {
         const software = e.target.value;
         
         // Reset campos dependentes
-        taskSelect.innerHTML = '<option value="">Selecione</option>';
-        taskSelect.disabled = true;
-        taskNameField.textContent = 'Nova Tarefa';
-        serviceNameField.textContent = 'Selecione uma task para começar';
+        selectors.taskSelect.innerHTML = '<option value="">Selecione</option>';
+        selectors.taskSelect.disabled = true;
+        selectors.taskNameField.textContent = 'Nova Tarefa';
+        selectors.serviceNameField.textContent = 'Selecione uma task para começar';
         
         if (!software) {
-            $(taskSelect).trigger('change.select2');
+            $(selectors.taskSelect).trigger('change.select2');
             return;
         }
 
@@ -467,35 +431,35 @@ async function toggleNewTimeTrack(editData = null) {
                          </option>`;
         });
         
-        taskSelect.innerHTML = taskHTML;
-        taskSelect.disabled = false;
-        $(taskSelect).trigger('change.select2');
+        selectors.taskSelect.innerHTML = taskHTML;
+        selectors.taskSelect.disabled = false;
+        $(selectors.taskSelect).trigger('change.select2');
     });
 
     // Evento Change Task (Select2)
-    $(taskSelect).off('select2:select').on('select2:select', function(e) {
+    $(selectors.taskSelect).off('select2:select').on('select2:select', function(e) {
         const data = e.params.data.element; 
-        taskNameField.textContent = data.dataset.taskName || 'Nova Tarefa';
-        serviceNameField.textContent = data.dataset.serviceName || 'Selecione uma task para começar';
+        selectors.taskNameField.textContent = data.dataset.taskName || 'Nova Tarefa';
+        selectors.serviceNameField.textContent = data.dataset.serviceName || 'Selecione uma task para começar';
     });
 
     // Mudanças nos Selects (Ajustado para funcionar com Select2)
-    $(taskSelect).on('change', () => {
+    $(selectors.taskSelect).on('change', () => {
         validateDates();
         updateClosingState();
     });
 
-    $(softwareSelect).on('change', () => {
+    $(selectors.softwareSelect).on('change', () => {
         validateDates();
         updateClosingState();
     });
 
-    statusSelect.addEventListener('change', () => {
+    selectors.statusSelect.addEventListener('change', () => {
         validateDates();
     });
 
     // Datas e Horas (Nativo)
-    [dataAbertura, horaAbertura, dataFechamento, horaFechamento].forEach(el => {
+    [selectors.openingDate, selectors.openingHour, selectors.closingDate, selectors.closingHour].forEach(el => {
         el.addEventListener('change', () => {
             validateDates();
             updateClosingState();
@@ -507,9 +471,9 @@ async function toggleNewTimeTrack(editData = null) {
     =========================== */
     if (editData) {
         // Bloqueia troca de software
-        $(softwareSelect).val(editData.software).trigger('change');
-        softwareSelect.disabled = true;
-        $(softwareSelect).next('.select2-container').css('pointer-events', 'none');
+        $(selectors.softwareSelect).val(editData.software).trigger('change');
+        selectors.softwareSelect.disabled = true;
+        $(selectors.softwareSelect).next('.select2-container').css('pointer-events', 'none');
 
         // Carregar tasks do software para que o Select2 possa selecionar o ID correto
         const tasks = await getAllTasksBySoftware(editData.software);
@@ -517,43 +481,43 @@ async function toggleNewTimeTrack(editData = null) {
         tasks.forEach(t => {
             taskHTML += `<option value="${t.id}" data-task-name="${t.taskName}" data-service-name="${t.serviceName}">${t.taskId}</option>`;
         });
-        taskSelect.innerHTML = taskHTML;
-        taskSelect.disabled = false;
+        selectors.taskSelect.innerHTML = taskHTML;
+        selectors.taskSelect.disabled = false;
         
         // Seleciona a task e atualiza labels
-        $(taskSelect).val(editData.taskIdValue).trigger('change');
-        const opt = taskSelect.options[taskSelect.selectedIndex];
+        $(selectors.taskSelect).val(editData.taskIdValue).trigger('change');
+        const opt = selectors.taskSelect.options[selectors.taskSelect.selectedIndex];
         if(opt) {
-            taskNameField.textContent = opt.dataset.taskName;
-            serviceNameField.textContent = opt.dataset.serviceName;
+            selectors.taskNameField.textContent = opt.dataset.taskName;
+            selectors.serviceNameField.textContent = opt.dataset.serviceName;
         }
 
         // Preenche tempos (YYYY-MM-DD e HH:mm)
-        dataAbertura.value = editData.startTime.split('T')[0];
-        horaAbertura.value = editData.startTime.split('T')[1].substring(0, 5);
+        selectors.openingDate.value = editData.startTime.split('T')[0];
+        selectors.openingHour.value = editData.startTime.split('T')[1].substring(0, 5);
         
         if (editData.endTime && editData.endTime !== "null") {
-            dataFechamento.value = editData.endTime.split('T')[0];
-            horaFechamento.value = editData.endTime.split('T')[1].substring(0, 5);
+            selectors.closingDate.value = editData.endTime.split('T')[0];
+            selectors.closingHour.value = editData.endTime.split('T')[1].substring(0, 5);
         }
 
-        notesInput.value = editData.notes || '';
-        statusSelect.value = editData.status;
+        selectors.notesInput.value = editData.notes || '';
+        selectors.statusSelect.value = editData.status;
 
         // Sobrescreve o clique do botão para EDITAR
-        saveTimeTrackerBtn.onclick = async (e) => {
+        selectors.saveTimeTrackerBtn.onclick = async (e) => {
             e.preventDefault();
-            const start = `${dataAbertura.value}T${horaAbertura.value}:00.000`;
-            const end = dataFechamento.value ? `${dataFechamento.value}T${horaFechamento.value}:00.000` : null;
-            await pauseFinishTimeTrack(editData.id, taskSelect.value, start, end, statusSelect.value, notesInput.value);
+            const start = `${selectors.openingDate.value}T${selectors.openingHour.value}:00.000`;
+            const end = selectors.closingDate.value ? `${selectors.closingDate.value}T${selectors.closingHour.value}:00.000` : null;
+            await pauseFinishTimeTrack(editData.id, selectors.taskSelect.value, start, end, selectors.statusSelect.value, selectors.notesInput.value);
             location.reload();
         };
     } else {
         // Modo criação: garante comportamento original de salvamento
-        saveTimeTrackerBtn.onclick = async (e) => {
+        selectors.saveTimeTrackerBtn.onclick = async (e) => {
             e.preventDefault();
-            if(!saveTimeTrackerBtn.disabled) {
-                statusSelect.value == '' ? showAlert('Por favor selecione um status!') : saveNewTimeTracker();
+            if(!selectors.saveTimeTrackerBtn.disabled) {
+                selectors.statusSelect.value == '' ? showAlert('Por favor selecione um status!') : saveNewTimeTracker();
             }
         };
     }
@@ -575,10 +539,8 @@ function listUserTimeTracks(tracks) {
             timeZone: 'UTC'
         });
     }
-
-    const tableBody = document.getElementById('tableBody');
     
-    tableBody.innerHTML = '';
+    selectors.tableBody.innerHTML = '';
 
     tracks.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
 
@@ -611,7 +573,7 @@ function listUserTimeTracks(tracks) {
             `;
         }
 
-        tableBody.innerHTML += `
+        selectors.tableBody.innerHTML += `
             <tr data-timetrack-id="${track.id}">
                 <td><a href="${track.url || ""}" target="_blank">${track.taskName || '-'}</a></td>
                 <td>${track.serviceName || '-'}</td>
@@ -689,8 +651,6 @@ async function setFilter(element) {
         const userId = Cookies.get("userId");
         const tracks = await getUserTimeTracks(userId);
 
-        const counter = document.getElementById('tracksCounter');
-
         const { start, end } = getLastDaysPeriod(days);
 
         const filteredTracks = tracks.filter(track => {
@@ -698,7 +658,7 @@ async function setFilter(element) {
             return date >= start && date <= end;
         });
 
-        counter.innerHTML = `${filteredTracks.length} apontamentos.`;
+        selectors.counter.innerHTML = `${filteredTracks.length} apontamentos.`;
 
         listUserTimeTracks(filteredTracks);
     } catch (err) {
@@ -714,8 +674,8 @@ async function setFilter(element) {
 document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
 
-    if (userSpan) {
-        userSpan.innerText = Cookies.get("userName") || "Usuário";
+    if (selectors.userSpan) {
+        selectors.userSpan.innerText = Cookies.get("userName") || "Usuário";
     }
 
     updateFilterTitles();
@@ -728,18 +688,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     initRangePicker();
 
-    userBtn?.addEventListener('click', e => {
+    selectors.userBtn?.addEventListener('click', e => {
         e.stopPropagation();
-        userMenu.classList.toggle('active');
+        selectors.userMenu.classList.toggle('active');
     });
 
-    changePassBtn?.addEventListener('click', e => {
+    selectors.changePassBtn?.addEventListener('click', e => {
         e.stopPropagation();
-        userMenu.classList.remove('active');
+        selectors.userMenu.classList.remove('active');
         toggleModal(true);
     });
 
-    logOutBtn?.addEventListener('click', () => {
+    selectors.logOutBtn?.addEventListener('click', () => {
         clearCookies();
         window.location.href = "/login.html";
     });
@@ -748,15 +708,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => setFilter(btn));
     });
 
-    addNewTimeTrackBtn.addEventListener('click', () => {
+    selectors.addNewTimeTrackBtn.addEventListener('click', () => {
         toggleNewTimeTrack();
     });
 
-    resetCloseBtn.addEventListener('click', () => {
+    selectors.resetCloseBtn.addEventListener('click', () => {
         toggleModal();
     });
 
-    tableBody.addEventListener('click', async (e) => {
+    selectors.tableBody.addEventListener('click', async (e) => {
         // Busca o ícone clicado ou o elemento pai caso clique na bordinha do ícone
         const icon = e.target.closest('i');
         if (!icon) return;
@@ -817,7 +777,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (icon.classList.contains('fa-pen-to-square')) {
             const row = icon.closest('tr');
             
-            // Coleta os dados da linha para o modal
+            // Coleta os dados da linha para o selectors..modalTrack
             const dataToEdit = {
                 id: row.getAttribute('data-timetrack-id'),
                 taskIdValue: row.querySelector('[data-task-id]').getAttribute('data-task-id'),
@@ -833,5 +793,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    document.addEventListener('click', () => userMenu.classList.remove('active'));
+    document.addEventListener('click', () => selectors.userMenu.classList.remove('active'));
 });
