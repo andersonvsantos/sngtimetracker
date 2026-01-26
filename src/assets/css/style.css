@@ -565,7 +565,57 @@ footer {
     background-size: 16px;
 }
 
-/* REFORÇO PARA O CALENDÁRIO APARECER */
-.daterangepicker {
-    z-index: 9999 !important;
+/* Container do gatilho */
+.range-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Ajuste específico para o botão que vira Picker */
+#range-picker-btn {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    background: #fff; /* Fundo branco para destacar dos filtros cinzas */
+}
+
+/* Customização Flatpickr usando suas variáveis do :root */
+.flatpickr-calendar {
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important; /* Arredondado igual aos seus modais */
+}
+
+.flatpickr-day.selected, 
+.flatpickr-day.startRange, 
+.flatpickr-day.endRange {
+    background: var(--primary-blue) !important;
+    border-color: var(--primary-blue) !important;
+}
+
+.flatpickr-day.inRange {
+    background: #eef6ff !important; /* Um azul bem clarinho para o intervalo */
+    box-shadow: -5px 0 0 #eef6ff, 5px 0 0 #eef6ff !important;
+    color: var(--secondary-blue) !important;
+}
+
+.flatpickr-day:hover {
+    background: var(--light-gray) !important;
+}
+
+/* Estilo do cabeçalho do calendário */
+.flatpickr-months .flatpickr-month {
+    color: var(--text-dark) !important;
+    fill: var(--text-dark) !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-weight: bold !important;
+}
+
+#range-picker-btn.active {
+    background-color: #007bff; /* ou sua cor de destaque */
+    color: white;
+    cursor: pointer !important; /* Força o cursor de clique */
 }

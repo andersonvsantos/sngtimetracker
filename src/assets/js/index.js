@@ -1,6 +1,8 @@
 import $ from 'jquery';
 import select2 from 'select2';
 import Cookies from 'js-cookie';
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.css";
 
 // IMPORTANTE: Expõe o jQuery globalmente para os plugins
 window.jQuery = window.$ = $;
@@ -42,6 +44,66 @@ const saveTimeTrackerBtn = document.getElementById('save-track-btn');
 /* ===========================
    UTILIDADES
    =========================== */
+
+function initRangePicker() {
+    const rangeBtn = document.getElementById("range-picker-btn");
+    const rangeLabel = document.getElementById('range-label');
+    if (!rangeBtn) return;
+
+    flatpickr(rangeBtn, {
+        mode: "range",
+        dateFormat: "d/m/Y",
+        showMonths: 2,
+        allowInput: false,
+        disableMobile: true,
+        onClose: function(selectedDates, dateStr) {
+            if (selectedDates.length === 2) {
+                if (rangeLabel) rangeLabel.innerText = dateStr;
+                
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.disabled = false;
+                });
+
+                rangeBtn.classList.add('active');
+                rangeBtn.disabled = false; 
+
+                const [start, end] = selectedDates;
+                executarFiltroCustomizado(start, end);
+            }
+        }
+    });
+}
+
+async function executarFiltroCustomizado(start, end) {
+    try {
+        const userId = Cookies.get("userId");
+        // Não limpamos a tabela aqui para evitar o efeito de "tela branca"
+        
+        const tracks = await getUserTimeTracks(userId);
+        
+        // Criamos cópias para não alterar os objetos originais do Flatpickr
+        const startDate = new Date(start);
+        startDate.setHours(0, 0, 0, 0);
+
+        const endDate = new Date(end);
+        endDate.setHours(23, 59, 59, 999);
+
+        const filteredTracks = tracks.filter(track => {
+            const trackDate = new Date(track.startTime);
+            return trackDate >= startDate && trackDate <= endDate;
+        });
+
+        // Só atualiza o DOM após o filtro estar pronto
+        const counter = document.getElementById('tracksCounter');
+        if (counter) counter.innerHTML = `${filteredTracks.length} apontamentos.`;
+        
+        listUserTimeTracks(filteredTracks);
+    } catch (err) {
+        console.error(err);
+        showAlert("Erro ao filtrar período.");
+    }
+}
 
 function clearCookies() {
     const allCookies = Cookies.get();
@@ -663,6 +725,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (weekBtn) {
         await setFilter(weekBtn);
     }
+
+    initRangePicker();
 
     userBtn?.addEventListener('click', e => {
         e.stopPropagation();
