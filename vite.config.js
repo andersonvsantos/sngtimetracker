@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: './', // Adicione esta linha
+  base: './',
   resolve: {
     alias: {
       jquery: resolve(__dirname, 'node_modules/jquery/dist/jquery.js'),

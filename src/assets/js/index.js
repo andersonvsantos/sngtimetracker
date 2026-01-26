@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import select2 from 'select2';
+import Cookies from 'js-cookie';
 
 // IMPORTANTE: Expõe o jQuery globalmente para os plugins
 window.jQuery = window.$ = $;
@@ -42,8 +43,16 @@ const saveTimeTrackerBtn = document.getElementById('save-track-btn');
    UTILIDADES
    =========================== */
 
+function clearCookies() {
+    const allCookies = Cookies.get();
+
+    Object.keys(allCookies).forEach(cookieName => {
+        Cookies.remove(cookieName);
+    });
+}
+
 async function checkAuth() {
-    const token = sessionStorage.getItem("sessionToken");
+    const token = Cookies.get("sessionToken");
 
     if (!token) {
         window.location.href = "/login.html";
@@ -62,7 +71,7 @@ async function checkAuth() {
             throw new Error("Token inválido");
         }
     } catch (err) {
-        sessionStorage.clear();
+        clearCookies();
         window.location.href = "/login.html";
     }
 }
@@ -134,7 +143,7 @@ async function pauseFinishTimeTrack(timeTrackId, taskId, startTime, endTime, sta
 }
 
 function getUserTimeTracks(userId) {
-    const token = sessionStorage.getItem("sessionToken");
+    const token = Cookies.get("sessionToken");
 
     return fetch(`${baseUrl}/maintenance/user/${userId}`, {
         headers: {
@@ -147,7 +156,7 @@ function getUserTimeTracks(userId) {
 }
 
 function getAllSoftwares() {
-    const token = sessionStorage.getItem("sessionToken");
+    const token = Cookies.get("sessionToken");
 
     return fetch(`${baseUrl}/maintenance/softwares`, {
         headers: {
@@ -160,7 +169,7 @@ function getAllSoftwares() {
 }
 
 function getAllTasksBySoftware(software) {
-    const token = sessionStorage.getItem("sessionToken");
+    const token = Cookies.get("sessionToken");
 
     return fetch(`${baseUrl}/maintenance/tasksBySoftware/${software}`, {
         headers: {
@@ -176,7 +185,7 @@ async function saveNewTimeTracker() {
     // Resultado esperado: "2026-01-15T14:18:00.0000000"
     const startTime = `${dataAbertura.value}T${horaAbertura.value}:00.0000000`;
     const endTime = dataFechamento.value && dataFechamento.value ? `${dataFechamento.value}T${horaFechamento.value}:00.0000000`: null;
-    await createNewTimeTrack(sessionStorage.getItem("userId"), taskSelect.value, startTime, endTime, statusSelect.value, notesInput.value);
+    await createNewTimeTrack(Cookies.get("userId"), taskSelect.value, startTime, endTime, statusSelect.value, notesInput.value);
     location.reload();
 }
 
@@ -615,7 +624,7 @@ async function setFilter(element) {
     }
 
     try {
-        const userId = sessionStorage.getItem("userId");
+        const userId = Cookies.get("userId");
         const tracks = await getUserTimeTracks(userId);
 
         const counter = document.getElementById('tracksCounter');
@@ -644,7 +653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
 
     if (userSpan) {
-        userSpan.innerText = sessionStorage.getItem("userName") || "Usuário";
+        userSpan.innerText = Cookies.get("userName") || "Usuário";
     }
 
     updateFilterTitles();
@@ -667,7 +676,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     logOutBtn?.addEventListener('click', () => {
-        sessionStorage.clear();
+        clearCookies();
         window.location.href = "/login.html";
     });
 
@@ -732,7 +741,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         else if (icon.classList.contains('fa-play')) {
             try {
-                await createNewTimeTrack(sessionStorage.getItem("userId"), taskId, localTime, null, "1", '');
+                await createNewTimeTrack(Cookies.get("userId"), taskId, localTime, null, "1", '');
                 showAlert("Tarefa iniciada com sucesso!", "success");
                 setTimeout(() => location.reload(), 1000);
             } catch (err) {

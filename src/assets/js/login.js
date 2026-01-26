@@ -1,3 +1,5 @@
+import Cookies from 'js-cookie'
+
 let baseUrl = 'https://sngtimetracker.sng.com.br';
 
 // --- Função de Alerta Global ---
@@ -50,10 +52,10 @@ async function login() {
         }
 
         // Sucesso: Salva e Redireciona
-        sessionStorage.setItem("userId", data.user.id);
-        sessionStorage.setItem("userName", data.user.userName);
-        sessionStorage.setItem("userEmail", data.user.userEmail);
-        sessionStorage.setItem("sessionToken", data.token);
+        Cookies.set("userId", data.user.id, { expires: 30 });
+        Cookies.set("userName", data.user.userName, { expires: 30 });
+        Cookies.set("userEmail", data.user.userEmail, { expires: 30 });
+        Cookies.set("sessionToken", data.token, { expires: 30 });
         window.location.href = "./index.html";
 
     } catch (err) {
