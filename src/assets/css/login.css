@@ -1,3 +1,8 @@
+/* ==========================================================================
+   RESETS DE NAVEGADOR & APARÊNCIA NATIVA
+   Remove botões padrão de inputs de senha e busca para personalização.
+   ========================================================================== */
+
 /* Remove botão de mostrar senha (Edge / Chrome / Brave) */
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
@@ -20,6 +25,10 @@ input {
     appearance: none;
 }
 
+/* ==========================================================================
+   CONFIGURAÇÕES GERAIS & VARIÁVEIS
+   Cores do tema de login, gradientes e sombras.
+   ========================================================================== */
 :root {
     --primary-blue: #007bff;
     --success-green: #2ecc71;
@@ -40,6 +49,10 @@ body {
     overflow: hidden;
 }
 
+/* ==========================================================================
+   CARD DE LOGIN
+   Centralização, espaçamento e área de logotipo.
+   ========================================================================== */
 .login-card {
     background: white;
     width: 100%;
@@ -62,6 +75,10 @@ body {
     gap: 10px;
 }
 
+/* ==========================================================================
+   GRUPOS DE INPUT & FORMULÁRIO
+   Estilização de rótulos, campos de texto e ícones internos.
+   ========================================================================== */
 .input-group {
     text-align: left;
     margin-bottom: 20px;
@@ -106,6 +123,10 @@ body {
     color: #aaa;
 }
 
+/* ==========================================================================
+   BOTÕES DE AÇÃO
+   Estilos para o botão principal de login e botões de modais.
+   ========================================================================== */
 .login-btn, .action-btn {
     width: 100%;
     background-color: var(--primary-blue);
@@ -121,7 +142,10 @@ body {
 
 .login-btn:hover { background-color: #0056b3; }
 
-/* Modal */
+/* ==========================================================================
+   MODAL (REDEFINIÇÃO DE SENHA)
+   Overlay de fundo, animação de entrada e botão de fechar.
+   ========================================================================== */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -159,7 +183,10 @@ body {
     color: #999;
 }
 
-/* Alerta Customizado */
+/* ==========================================================================
+   ALERTAS CUSTOMIZADOS (TOASTS)
+   Notificações flutuantes para erros e sucessos de autenticação.
+   ========================================================================== */
 .custom-alert {
     position: fixed;
     top: 20px;
@@ -187,23 +214,26 @@ body {
 .custom-alert .title { font-weight: bold; display: block; font-size: 0.9rem; }
 .custom-alert .desc { color: #666; font-size: 0.8rem; line-height: 1.4; }
 
+/* ==========================================================================
+   RODAPÉ & LINKS ADICIONAIS
+   Créditos de copyright e links de recuperação de conta.
+   ========================================================================== */
 .copy { position: absolute; bottom: 20px; font-size: 0.8rem; color: #888; }
 
-/* Links de rodapé (Esqueci a senha) */
 .footer-links { 
-    margin-top: 25px; /* Espaçamento entre o botão e o link */
+    margin-top: 25px; 
     font-size: 0.85rem; 
 }
 
 .footer-links a { 
-    color: var(--primary-blue); /* Cor azul definida no :root */
+    color: var(--primary-blue); 
     text-decoration: none; 
     cursor: pointer; 
-    font-weight: 300; /* Fonte mais fina */
+    font-weight: 300; 
     transition: 0.3s;
 }
 
 .footer-links a:hover { 
     text-decoration: underline; 
-    filter: brightness(0.8); /* Escurece levemente ao passar o mouse */
+    filter: brightness(0.8); 
 }

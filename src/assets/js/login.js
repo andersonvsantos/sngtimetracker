@@ -1,14 +1,23 @@
 import Cookies from 'js-cookie'
 
+/**
+ * @description URL base para as chamadas de autenticação.
+ */
 let baseUrl = 'https://sngtimetracker.sng.com.br';
 
-// --- Função de Alerta Global ---
+/**
+ * @description Exibe mensagens de feedback (sucesso ou erro) em um container flutuante na tela de login.
+ * @param {string} message Texto descritivo da mensagem.
+ * @param {string} [type='error'] Tipo do alerta para definir cores e ícones.
+ * @returns {void}
+ */
 const showAlert = (message, type = 'error') => {
     const alertBox = document.getElementById('alert-container');
     const alertDesc = document.getElementById('alert-desc');
     const alertTitle = document.getElementById('alert-title');
     const alertIcon = alertBox.querySelector('i');
 
+    // Configuração visual baseada no tipo de alerta
     if (type === 'success') {
         alertBox.classList.add('success');
         alertTitle.textContent = "Sucesso";
@@ -22,16 +31,21 @@ const showAlert = (message, type = 'error') => {
     alertDesc.textContent = message;
     alertBox.classList.add('show');
 
+    // Remove o alerta automaticamente após 6 segundos
     setTimeout(() => {
         alertBox.classList.remove('show');
     }, 6000);
 };
 
-// --- Função de Login ---
+/**
+ * @description Realiza a autenticação do usuário, armazena os dados em cookies e redireciona para o dashboard.
+ * @returns {Promise<void>}
+ */
 async function login() {
     const userEmail = document.getElementById("login-email").value;
     const userPassword = document.getElementById("login-password").value;
 
+    // Validação básica de preenchimento
     if (!userEmail || !userPassword) {
         showAlert("Por favor, preencha todos os campos.");
         return;
@@ -46,16 +60,19 @@ async function login() {
 
         const data = await response.json();
 
+        // Tratamento de credenciais inválidas ou erro de negócio
         if (!response.ok) {
             showAlert(data.message || "E-mail ou senha inválidos. Verifique se suas credenciais estão cadastradas!", "error");
             return; 
         }
 
-        // Sucesso: Salva e Redireciona
+        // Sucesso: Persistência dos dados do usuário por 30 dias via Cookies
         Cookies.set("userId", data.user.id, { expires: 30 });
         Cookies.set("userName", data.user.userName, { expires: 30 });
         Cookies.set("userEmail", data.user.userEmail, { expires: 30 });
         Cookies.set("token", data.token, { expires: 30 });
+
+        // Redirecionamento para a página principal
         window.location.href = "./index.html";
 
     } catch (err) {
@@ -64,15 +81,19 @@ async function login() {
     }
 }
 
-// --- Função de Reset de Senha ---
+/**
+ * @description Solicita a alteração ou definição de uma nova senha para o usuário.
+ * @param {Event} event Evento de submit do formulário.
+ * @returns {Promise<void>}
+ */
 async function resetPassword(event) {
     event.preventDefault();
 
     const userEmail = document.getElementById("reset-email").value;
-    const oldPassword = document.getElementById("reset-old-password").value; // Pode vir vazio
+    const oldPassword = document.getElementById("reset-old-password").value;
     const newPassword = document.getElementById("reset-new-password").value;
 
-    // Apenas Email e Nova Senha são obrigatórios para o envio
+    // Validação de campos obrigatórios para o reset
     if (!userEmail || !newPassword) {
         showAlert("Preencha o e-mail e a nova senha.", "error");
         return;
@@ -84,7 +105,7 @@ async function resetPassword(event) {
             headers: { "Content-type": "application/json" },
             body: JSON.stringify({ 
                 userEmail, 
-                oldPassword: oldPassword || null, // Garante que envie null se estiver vazio
+                oldPassword: oldPassword || null, // Garante envio de null se a conta for nova/sem senha
                 newPassword 
             })
         });
@@ -97,6 +118,7 @@ async function resetPassword(event) {
         }
 
         showAlert("Senha salva com sucesso!", "success");
+        // Fecha o modal após 2 segundos em caso de sucesso
         setTimeout(() => toggleModal(false), 2000);
 
     } catch (err) {
@@ -104,34 +126,38 @@ async function resetPassword(event) {
     }
 }
 
-// --- Inicialização e Eventos ---
+/**
+ * @description Inicializa os ouvintes de eventos da tela de login após o carregamento do DOM.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('login-btn');
     const loginPasswordInput = document.getElementById('login-password');
     const loginEmailInput = document.getElementById('login-email');
     const forgotForm = document.getElementById('forgotForm');
 
-    // Clique no botão de entrar
+    // Gatilho de login via clique
     if (loginBtn) loginBtn.addEventListener('click', login);
 
-    // Enter nos campos de login
+    // Atalho: Permite fazer login pressionando a tecla 'Enter'
     const handleLoginEnter = (e) => { if (e.key === 'Enter') login(); };
     if (loginEmailInput) loginEmailInput.addEventListener('keydown', handleLoginEnter);
     if (loginPasswordInput) loginPasswordInput.addEventListener('keydown', handleLoginEnter);
 
-    // Submit do formulário de reset
+    // Listener para o formulário de "Esqueci minha senha"
     if (forgotForm) forgotForm.addEventListener('submit', resetPassword);
 
-    // Mostrar/Esconder Senha
+    /**
+     * @description Gerencia a funcionalidade de "mostrar/esconder" a senha no campo de input.
+     */
     const togglePassIcon = document.getElementById('togglePassword');
     if (togglePassIcon && loginPasswordInput) {
         togglePassIcon.addEventListener('click', () => {
             const isPass = loginPasswordInput.type === 'password';
             
-            // Troca o tipo do input
+            // Alterna o atributo type entre 'text' (visível) e 'password' (oculto)
             loginPasswordInput.type = isPass ? 'text' : 'password';
             
-            // Troca o ícone de forma limpa
+            // Alterna a classe do ícone (olho aberto / olho fechado)
             if (isPass) {
                 togglePassIcon.classList.remove('fa-eye');
                 togglePassIcon.classList.add('fa-eye-slash');
@@ -142,8 +168,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Controle do Modal
+    // --- Controle Global do Modal ---
     const modal = document.getElementById('modalForgot');
+    
+    /**
+     * @description Torna a função de toggle do modal disponível globalmente.
+     * @param {boolean} show Define se exibe (true) ou oculta (false).
+     */
     window.toggleModal = (show) => { if (modal) modal.style.display = show ? 'flex' : 'none'; };
+
+    /**
+     * @description Fecha o modal caso o usuário clique na área sombreada (fora do conteúdo).
+     */
     window.onclick = (e) => { if (e.target === modal) toggleModal(false); };
 });

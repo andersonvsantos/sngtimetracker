@@ -1,4 +1,7 @@
-/* ================= CONFIGURAÇÕES GERAIS & VARIÁVEIS ================= */
+/* ==========================================================================
+   CONFIGURAÇÕES GERAIS & VARIÁVEIS
+   Definição de cores globais, tipografia e reset básico.
+   ========================================================================== */
 :root {
     --primary-blue: #007bff;
     --secondary-blue: #0054ad;
@@ -11,6 +14,7 @@
     --orange: #ff9900;
 }
 
+/* Estilização da barra de rolagem (Chrome, Edge e Safari) */
 ::-webkit-scrollbar { 
     width: 10px; 
     height: 10px; 
@@ -19,7 +23,6 @@
 ::-webkit-scrollbar-track { 
     background: #e9ecef; 
     border-radius: 10px; 
-
 }
 
 ::-webkit-scrollbar-thumb { 
@@ -32,6 +35,7 @@
     background-color: var(--secondary-blue); 
 }
 
+/* Configurações de layout do corpo da página */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f0f2f5;
@@ -42,7 +46,10 @@ body {
     min-height: 100vh;
 }
 
-/* ================= HEADER & NAVBAR ================= */
+/* ==========================================================================
+   HEADER & NAVBAR
+   Logotipo, link do dashboard e perfil do usuário.
+   ========================================================================== */
 header {
     background-color: #fff;
     padding: 10px 40px;
@@ -94,7 +101,10 @@ header {
     transform: scale(1.1); 
 }
 
-/* ================= DROPDOWN MENU ================= */
+/* ==========================================================================
+   DROPDOWN MENU (PERFIL DO USUÁRIO)
+   Menu suspenso para Alterar Senha e Logout.
+   ========================================================================== */
 .user-menu {
     position: absolute;
     right: 40px;
@@ -108,6 +118,7 @@ header {
     width: 150px;
 }
 
+/* Estado ativo do menu controlado via JS */
 .user-menu.active { 
     display: block; 
     animation: fadeDown 0.2s ease; 
@@ -131,7 +142,10 @@ header {
     font-weight: bold; 
 }
 
-/* ================= CONTEÚDO PRINCIPAL ================= */
+/* ==========================================================================
+   CONTEÚDO PRINCIPAL
+   Contêiner centralizado e botão de novo apontamento.
+   ========================================================================== */
 main {
     padding: 0 40px 40px 40px;
     max-width: 1200px;
@@ -163,7 +177,10 @@ main {
     background-color: var(--secondary-blue); 
 }
 
-/* ================= FILTROS ================= */
+/* ==========================================================================
+   FILTROS (SEMANA, MÊS, ANO)
+   Botões de filtragem de data.
+   ========================================================================== */
 .filters { 
     display: flex;
     gap: 10px; 
@@ -196,7 +213,10 @@ main {
     font-size: 0.9rem; 
 }
 
-/* ================= TABELA ================= */
+/* ==========================================================================
+   TABELA DE DADOS
+   Estilização das linhas, colunas e estados (Status).
+   ========================================================================== */
 .table-container {
     background: white;
     border-radius: 12px;
@@ -229,7 +249,7 @@ td a {
     color: var(--primary-blue);
 }
 
-/* Status na Tabela */
+/* Estilização das Badges de Status na Tabela */
 .status {
     padding: 4px 12px;
     border-radius: 12px;
@@ -249,7 +269,7 @@ td a {
     background-color: var(--orange); 
 }
 
-/* Ações na Tabela */
+/* Ícones de Ações (Play, Pause, Finish, Edit) */
 .actions-wrapper { 
     display: flex; 
     align-items: center; 
@@ -278,7 +298,10 @@ td a {
     color: var(--primary-blue); 
 }
 
-/* ================= MODAIS (GENÉRICO) ================= */
+/* ==========================================================================
+   MODAIS (GENÉRICO & RESET SENHA)
+   Estrutura de overlay e cartões modais.
+   ========================================================================== */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0;
@@ -313,17 +336,18 @@ td a {
     color: var(--primary-red); 
 }
 
+/* Diferenciação de largura entre modais */
 #modalForgot .modal-card {
-    max-width: 400px; /* Largura menor para o Reset */
+    max-width: 400px; 
     padding: 30px;
 }
 
 #modalTrack .modal-card {
-    max-width: 550px; /* Largura maior para o Apontamento */
+    max-width: 550px; 
     padding: 30px;
 }
 
-/* Conteúdo Interno do Modal */
+/* Estilização de Formulários dentro dos Modais */
 .modal-card .input-group { 
     text-align: left; 
     margin-bottom: 20px; 
@@ -383,7 +407,10 @@ td a {
     transform: translateY(-1px); 
 }
 
-/* ================= MODAL ESPECÍFICO: APONTAMENTO ================= */
+/* ==========================================================================
+   MODAL ESPECÍFICO: APONTAMENTO (TIMETRACK)
+   Cabeçalho destacado e campos lado a lado.
+   ========================================================================== */
 .modal-header-highlight {
     background-color: #f8faff;
     padding: 15px 20px;
@@ -432,7 +459,7 @@ td a {
     gap: 5px; 
 }
 
-/* Status Select Customizado */
+/* Status Select Customizado com cores dinâmicas via :has() */
 .status-select-custom {
     font-weight: bold;
     color: #fff;
@@ -458,7 +485,10 @@ td a {
     background-color: var(--orange); 
 }
 
-/* ================= ALERTAS CUSTOMIZADOS ================= */
+/* ==========================================================================
+   ALERTAS CUSTOMIZADOS
+   Sistema de notificações laterais (Toasts).
+   ========================================================================== */
 .custom-alert {
     position: fixed;
     top: 20px; right: -450px;
@@ -503,7 +533,10 @@ td a {
     line-height: 1.4; 
 }
 
-/* ================= FOOTER & ANIMAÇÕES ================= */
+/* ==========================================================================
+   FOOTER, ANIMAÇÕES & RESPONSIVIDADE
+   Roda-pé, keyframes e ajustes mobile.
+   ========================================================================== */
 footer {
     text-align: center;
     padding: 20px;
@@ -528,7 +561,7 @@ footer {
     .row-group { flex-direction: column; }
 }
 
-/* Garante que o container das datas ocupe 100% e não deixe nada vazar */
+/* Ajustes de data e hora para não quebrar em telas menores */
 .datetime-row {
     display: flex;
     gap: 5px;
@@ -536,23 +569,23 @@ footer {
     box-sizing: border-box;
 }
 
-/* Força os inputs a encolherem e respeitarem o pai */
 .datetime-row input {
     flex: 1;
-    min-width: 0; /* ESSENCIAL: Remove a largura mínima padrão do navegador */
+    min-width: 0; 
     width: 100%;
-    padding: 10px 5px !important; /* Padding lateral menor para ganhar espaço interno */
-    font-size: 0.85rem; /* Leve redução para não quebrar o texto interno */
+    padding: 10px 5px !important; 
+    font-size: 0.85rem; 
 }
 
-/* Se houver labels muito longas ou grupos que esticam, garanta o box-sizing */
 .input-group {
     min-width: 0;
     flex: 1;
 }
 
-/* ... (Todo o seu conteúdo anterior do style.css mantido) ... */
-
+/* ==========================================================================
+   FLATPICKR (CALENDÁRIO RANGE)
+   Customização do plugin de seleção de datas.
+   ========================================================================== */
 .filter-input {
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -565,26 +598,24 @@ footer {
     background-size: 16px;
 }
 
-/* Container do gatilho */
 .range-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-/* Ajuste específico para o botão que vira Picker */
 #range-picker-btn {
     display: flex;
     align-items: center;
     white-space: nowrap;
-    background: #fff; /* Fundo branco para destacar dos filtros cinzas */
+    background: #fff; 
 }
 
-/* Customização Flatpickr usando suas variáveis do :root */
+/* Customização visual do calendário Flatpickr */
 .flatpickr-calendar {
     border: 1px solid var(--border-color) !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-    border-radius: 12px !important; /* Arredondado igual aos seus modais */
+    border-radius: 12px !important; 
 }
 
 .flatpickr-day.selected, 
@@ -595,7 +626,7 @@ footer {
 }
 
 .flatpickr-day.inRange {
-    background: #eef6ff !important; /* Um azul bem clarinho para o intervalo */
+    background: #eef6ff !important; 
     box-shadow: -5px 0 0 #eef6ff, 5px 0 0 #eef6ff !important;
     color: var(--secondary-blue) !important;
 }
@@ -604,7 +635,6 @@ footer {
     background: var(--light-gray) !important;
 }
 
-/* Estilo do cabeçalho do calendário */
 .flatpickr-months .flatpickr-month {
     color: var(--text-dark) !important;
     fill: var(--text-dark) !important;
@@ -614,8 +644,9 @@ footer {
     font-weight: bold !important;
 }
 
+/* Estado ativo do botão Range Picker */
 #range-picker-btn.active {
-    background-color: #007bff; /* ou sua cor de destaque */
+    background-color: #007bff; 
     color: white;
-    cursor: pointer !important; /* Força o cursor de clique */
+    cursor: pointer !important; 
 }
