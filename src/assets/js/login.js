@@ -7,7 +7,7 @@ let baseUrl = 'https://sngtimetracker.sng.com.br';
 
 const msalConfig = {
     auth: {
-        clientId: "634babf5-4626-421a-ba32-fac3b7a3c9ed", // Do registro no Azure
+        clientId: "86370d8b-58c6-48e3-ab6d-223cc00cd806", // Do registro no Azure
         authority: "https://login.microsoftonline.com/8d357e44-1e9f-480e-a0ee-61c49408b798",
         redirectUri: window.location.origin // Onde ele volta após o login
     }
