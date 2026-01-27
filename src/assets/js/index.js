@@ -5,7 +5,7 @@ import "flatpickr/dist/flatpickr.css";
 import { checkAuth, createNewTimeTrack, pauseFinishTimeTrack } from './api';
 import { selectors } from './constants';
 import { toggleNewTimeTrack, handlePasswordReset } from './controllers';
-import { initRangePicker, setFilter, updateFilterTitles } from './filters';
+import { initRangePicker, setFilter, updateFilterTitles, refreshActiveFilter } from './filters';
 import { clearCookies, showAlert } from './utils';
 import { toggleModal } from './ui';
 
@@ -42,6 +42,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Inicializa o seletor de intervalo de datas (Flatpickr)
     initRangePicker();
+
+    setInterval(async () => {
+        console.log("Atualizando lista de tracks automaticamente...");
+        await refreshActiveFilter();
+    }, 120000);
 
     // --- Gerenciamento do Menu de Usuário ---
     selectors.userBtn?.addEventListener('click', e => {

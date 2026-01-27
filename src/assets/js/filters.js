@@ -163,3 +163,23 @@ export async function setCustomFilter(start, end) {
         showAlert("Erro ao filtrar período.");
     }
 }
+
+/**
+ * @description Localiza o filtro que está ativo no momento e dispara a atualização dos dados.
+ */
+export async function refreshActiveFilter() {
+    // Busca o botão que tem a classe 'active'
+    const activeBtn = document.querySelector('.filter-btn.active');
+    
+    if (activeBtn) {
+        // Se for um dos botões rápidos (Semana, Mês, Ano)
+        await setFilter(activeBtn);
+    } else if (selectors.rangeBtn && selectors.rangeBtn.classList.contains('active')) {
+        // Se for o filtro de calendário customizado
+        const instance = selectors.rangeBtn._flatpickr;
+        if (instance && instance.selectedDates.length === 2) {
+            const [start, end] = instance.selectedDates;
+            await setCustomFilter(start, end);
+        }
+    }
+}
