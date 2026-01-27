@@ -5,6 +5,57 @@ import Cookies from 'js-cookie'
  */
 let baseUrl = 'https://sngtimetracker.sng.com.br';
 
+const msalConfig = {
+    auth: {
+        clientId: "634babf5-4626-421a-ba32-fac3b7a3c9ed", // Do registro no Azure
+        authority: "https://login.microsoftonline.com/8d357e44-1e9f-480e-a0ee-61c49408b798",
+        redirectUri: window.location.origin // Onde ele volta após o login
+    }
+};
+
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+async function loginMicrosoft() {
+    try {
+        // 1. Abre o popup da Microsoft para login
+        const loginResponse = await msalInstance.loginPopup({
+            scopes: ["user.read", "openid", "profile", "email"]
+        });
+
+        // 2. Extrai o e-mail do usuário logado na Microsoft
+        const userEmail = loginResponse.account.username;
+
+        // 3. Envia para o SEU backend (usando uma rota que ignore a senha, ou enviando um flag)
+        const response = await fetch(`${baseUrl}/auth/login-ad`, { // Crie uma rota específica no back
+            method: "POST",
+            headers: { "Content-type": "application/json" },
+            body: JSON.stringify({ userEmail, isExternal: true })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showAlert(data.message || "Usuário AD não encontrado no sistema.", "error");
+            return;
+        }
+
+        // 4. Reaproveita sua lógica de cookies existente
+        Cookies.set("userId", data.user.id, { expires: 30 });
+        Cookies.set("userName", data.user.userName, { expires: 30 });
+        Cookies.set("userEmail", data.user.userEmail, { expires: 30 });
+        Cookies.set("token", data.token, { expires: 30 });
+
+        window.location.href = "./index.html";
+
+    } catch (err) {
+        console.error("Erro no login Microsoft:", err);
+        showAlert("Falha na autenticação com a Microsoft.");
+    }
+}
+
+// Vincule ao botão
+document.getElementById('ms-login-btn').addEventListener('click', loginMicrosoft);
+
 /**
  * @description Exibe mensagens de feedback (sucesso ou erro) em um container flutuante na tela de login.
  * @param {string} message Texto descritivo da mensagem.
