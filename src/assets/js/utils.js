@@ -1,10 +1,6 @@
 import Cookies from 'js-cookie';
 import { selectors } from './constants';
 
-export function toggleModal(show) {
-    if (selectors.modalForgot) selectors.modalForgot.style.display = show ? 'flex' : 'none';
-}
-
 export function showAlert(message, type = "error") {
     if (!selectors.alertContainer) return;
 
