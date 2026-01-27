@@ -60,7 +60,7 @@ export async function saveNewTimeTracker() {
  */
 export async function toggleNewTimeTrack(editData = null) {
     
-    selectors.modalTrack.style.display = 'flex';
+    selectors.trackModal.style.display = 'flex';
 
     // Inicializa o botão de salvar como desabilitado por segurança
     selectors.saveTimeTrackerBtn.disabled = true;
@@ -83,13 +83,13 @@ export async function toggleNewTimeTrack(editData = null) {
     }
 
     $(selectors.softwareSelect).select2({
-        dropdownParent: $('#modalTrack'),
+        dropdownParent: $('#trackModal'),
         placeholder: 'Selecione um software',
         width: '100%'
     });
 
     $(selectors.taskSelect).select2({
-        dropdownParent: $('#modalTrack'),
+        dropdownParent: $('#trackModal'),
         placeholder: 'Digite para buscar task',
         width: '100%'
     });
@@ -220,8 +220,8 @@ export async function toggleNewTimeTrack(editData = null) {
     }
 
     // Configuração do evento de fechar o modal e resetar formulário
-    document.getElementById('closemodalTrack').onclick = () => {
-        selectors.modalTrack.style.display = 'none';
+    document.getElementById('closeTrackModal').onclick = () => {
+        selectors.trackModal.style.display = 'none';
         selectors.trackForm.reset();
         selectors.taskNameField.textContent = 'Nova Tarefa';
         selectors.serviceNameField.textContent = 'Selecione uma task para começar';

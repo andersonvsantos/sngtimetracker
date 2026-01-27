@@ -45,10 +45,10 @@ export const selectors = {
 
     // Elementos relacionados a alertas e modais de sistema
     forgotForm : document.getElementById('forgotForm'),
-    modalForgot : document.getElementById('modalForgot'),
+    forgotModal : document.getElementById('forgotModal'),
     alertContainer : document.getElementById("alert-container"),
     alertTitle : document.getElementById("alert-title"),
     alertDesc : document.getElementById("alert-desc"),
-    modalTrack : document.getElementById('modalTrack'),
+    trackModal : document.getElementById('trackModal'),
     trackForm : document.getElementById('trackForm')
 }

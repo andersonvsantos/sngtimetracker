@@ -337,12 +337,12 @@ td a {
 }
 
 /* Diferenciação de largura entre modais */
-#modalForgot .modal-card {
+#forgotModal .modal-card {
     max-width: 400px; 
     padding: 30px;
 }
 
-#modalTrack .modal-card {
+#trackModal .modal-card {
     max-width: 550px; 
     padding: 30px;
 }

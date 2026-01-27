@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Controle Global do Modal ---
-    const modal = document.getElementById('modalForgot');
+    const modal = document.getElementById('forgotModal');
     
     /**
      * @description Torna a função de toggle do modal disponível globalmente.

@@ -85,5 +85,5 @@ export function listUserTimeTracks(tracks) {
  * @returns {void}
  */
 export function toggleModal(show) {
-    if (selectors.modalForgot) selectors.modalForgot.style.display = show ? 'flex' : 'none';
+    if (selectors.forgotModal) selectors.forgotModal.style.display = show ? 'flex' : 'none';
 }
