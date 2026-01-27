@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(async () => {
         console.log("Atualizando lista de tracks automaticamente...");
         await refreshActiveFilter();
-    }, 120000);
+    }, 10000);
 
     // --- Gerenciamento do Menu de Usuário ---
     selectors.userBtn?.addEventListener('click', e => {
