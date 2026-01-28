@@ -40,10 +40,10 @@ async function loginMicrosoft() {
         }
 
         // 4. Reaproveita sua lógica de cookies existente
-        Cookies.set("userId", data.user.id, { expires: 30 });
-        Cookies.set("userName", data.user.userName, { expires: 30 });
-        Cookies.set("userEmail", data.user.userEmail, { expires: 30 });
-        Cookies.set("token", data.token, { expires: 30 });
+        Cookies.set("userId", data.user.id, { expires: 30, path: '/'});
+        Cookies.set("userName", data.user.userName, { expires: 30, path: '/' });
+        Cookies.set("userEmail", data.user.userEmail, { expires: 30, path: '/' });
+        Cookies.set("token", data.token, { expires: 30, path: '/' });
 
         window.location.href = "./index.html";
 
@@ -93,7 +93,7 @@ const showAlert = (message, type = 'error') => {
  * @returns {Promise<void>}
  */
 async function login() {
-    const userEmail = document.getElementById("login-email").value;
+    let userEmail = document.getElementById("login-email").value;
     userEmail = userEmail.trim().toLowerCase();
     const userPassword = document.getElementById("login-password").value;
 
@@ -119,10 +119,10 @@ async function login() {
         }
 
         // Sucesso: Persistência dos dados do usuário por 30 dias via Cookies
-        Cookies.set("userId", data.user.id, { expires: 30 });
-        Cookies.set("userName", data.user.userName, { expires: 30 });
-        Cookies.set("userEmail", data.user.userEmail, { expires: 30 });
-        Cookies.set("token", data.token, { expires: 30 });
+        Cookies.set("userId", data.user.id, { expires: 30, path: '/'});
+        Cookies.set("userName", data.user.userName, { expires: 30, path: '/' });
+        Cookies.set("userEmail", data.user.userEmail, { expires: 30, path: '/' });
+        Cookies.set("token", data.token, { expires: 30, path: '/' });
 
         // Redirecionamento para a página principal
         window.location.href = "./index.html";
@@ -141,7 +141,7 @@ async function login() {
 async function resetPassword(event) {
     event.preventDefault();
 
-    const userEmail = document.getElementById("reset-email").value;
+    let userEmail = document.getElementById("reset-email").value;
     userEmail = userEmail.trim().toLowerCase();
     const oldPassword = document.getElementById("reset-old-password").value;
     const newPassword = document.getElementById("reset-new-password").value;
@@ -183,34 +183,43 @@ async function resetPassword(event) {
  * @description Inicializa os ouvintes de eventos da tela de login após o carregamento do DOM.
  */
 document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('login-btn');
     const loginPasswordInput = document.getElementById('login-password');
-    const loginEmailInput = document.getElementById('login-email');
     const forgotForm = document.getElementById('forgotForm');
 
-    // Gatilho de login via clique
-    if (loginBtn) loginBtn.addEventListener('click', login);
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); 
+            login();
+        });
+    }
 
-    // Atalho: Permite fazer login pressionando a tecla 'Enter'
-    const handleLoginEnter = (e) => { if (e.key === 'Enter') login(); };
-    if (loginEmailInput) loginEmailInput.addEventListener('keydown', handleLoginEnter);
-    if (loginPasswordInput) loginPasswordInput.addEventListener('keydown', handleLoginEnter);
+    if (loginBtn) {
+        loginBtn.addEventListener('click', (e) => {
+            if (loginBtn.type === 'button') {
+                login();
+            }
+        });
+    }
 
-    // Listener para o formulário de "Esqueci minha senha"
-    if (forgotForm) forgotForm.addEventListener('submit', resetPassword);
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            resetPassword(e);
+        });
+    }
 
     /**
-     * @description Gerencia a funcionalidade de "mostrar/esconder" a senha no campo de input.
+     * @description Gerencia a funcionalidade de "mostrar/esconder" a senha.
      */
     const togglePassIcon = document.getElementById('togglePassword');
     if (togglePassIcon && loginPasswordInput) {
         togglePassIcon.addEventListener('click', () => {
             const isPass = loginPasswordInput.type === 'password';
-            
-            // Alterna o atributo type entre 'text' (visível) e 'password' (oculto)
             loginPasswordInput.type = isPass ? 'text' : 'password';
             
-            // Alterna a classe do ícone (olho aberto / olho fechado)
             if (isPass) {
                 togglePassIcon.classList.remove('fa-eye');
                 togglePassIcon.classList.add('fa-eye-slash');
@@ -221,17 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Controle Global do Modal ---
     const modal = document.getElementById('forgotModal');
-    
-    /**
-     * @description Torna a função de toggle do modal disponível globalmente.
-     * @param {boolean} show Define se exibe (true) ou oculta (false).
-     */
     window.toggleModal = (show) => { if (modal) modal.style.display = show ? 'flex' : 'none'; };
-
-    /**
-     * @description Fecha o modal caso o usuário clique na área sombreada (fora do conteúdo).
-     */
     window.onclick = (e) => { if (e.target === modal) toggleModal(false); };
 });
