@@ -94,6 +94,7 @@ const showAlert = (message, type = 'error') => {
  */
 async function login() {
     const userEmail = document.getElementById("login-email").value;
+    userEmail = userEmail.trim().toLowerCase();
     const userPassword = document.getElementById("login-password").value;
 
     // Validação básica de preenchimento
@@ -141,6 +142,7 @@ async function resetPassword(event) {
     event.preventDefault();
 
     const userEmail = document.getElementById("reset-email").value;
+    userEmail = userEmail.trim().toLowerCase();
     const oldPassword = document.getElementById("reset-old-password").value;
     const newPassword = document.getElementById("reset-new-password").value;
 
