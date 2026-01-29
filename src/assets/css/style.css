@@ -281,11 +281,16 @@ td a {
     transition: 0.15s ease; 
 }
 
-.actions i:hover { 
+.actions i.desactived { 
+    cursor: not-allowed; 
+    opacity: 0.5;
+}
+
+.actions i:not(.desactived):hover { 
     transform: scale(1.2); 
 }
 
-.actions .fa-play:hover { 
+.actions .fa-play:not(.desactived):hover { 
     color: var(--green); 
 }
 

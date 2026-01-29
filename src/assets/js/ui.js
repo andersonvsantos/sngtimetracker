@@ -25,10 +25,15 @@ export function listUserTimeTracks(tracks) {
     // Ordena os apontamentos do mais recente para o mais antigo com base no horário de início
     tracks.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
 
+    const isAnyTaskRunning = tracks.some(track => track.status === "1");
+
     // Itera sobre cada apontamento para construir as linhas da tabela
     tracks.forEach(track => {
         let statusHtml = '';
         let actionsHtml = '';
+
+        const playDisabledClass = isAnyTaskRunning ? ' desactived' : '';
+        const hint = isAnyTaskRunning ? 'Já existe uma atividade aberta' : 'Iniciar tarefa';
 
         // Lógica para Status: "Aberto" (1)
         if (track.status === "1") {
@@ -44,7 +49,7 @@ export function listUserTimeTracks(tracks) {
         if (track.status === "3") {
             statusHtml = '<span class="status paused">Pausado</span>';
             actionsHtml = `
-                <i class="fas fa-play" title="Iniciar tarefa"></i>
+                <i class="fas fa-play${playDisabledClass}" title="${hint}"></i>
                 <i class="fa-solid fa-pen-to-square" title="Editar tarefa"></i>
             `;
         }
@@ -53,7 +58,7 @@ export function listUserTimeTracks(tracks) {
         if (track.status === "2") {
             statusHtml = '<span class="status finished">Finalizado</span>';
             actionsHtml = `
-                <i class="fas fa-play" title="Iniciar tarefa"></i>
+                <i class="fas fa-play${playDisabledClass}" title="${hint}"></i>
                 <i class="fa-solid fa-pen-to-square" title="Editar tarefa"></i>
             `;
         }

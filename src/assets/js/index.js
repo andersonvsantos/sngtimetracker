@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } 
         // AÇÃO: Iniciar/Retomar Tarefa (Cria um novo registro com Status 1)
-        else if (icon.classList.contains('fa-play')) {
+        else if (icon.classList.contains('fa-play') && !icon.classList.contains('desactived')) {
             try {
                 await createNewTimeTrack(Cookies.get("userId"), taskId, localTime, null, "1", '');
                 showAlert("Tarefa iniciada com sucesso!", "success");
