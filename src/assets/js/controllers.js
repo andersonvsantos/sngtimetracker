@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import $, { now } from 'jquery';
 import Cookies from 'js-cookie';
 import { createNewTimeTrack, getAllSoftwares, getAllTasksBySoftware, pauseFinishTimeTrack, updatePassword } from './api';
 import { selectors } from './constants';
@@ -184,9 +184,19 @@ export async function toggleNewTimeTrack(editData = null) {
         if (dadosFechamentoOk) {
             const start = new Date(`${selectors.openingDate.value}T${selectors.openingHour.value}`);
             const end = new Date(`${selectors.closingDate.value}T${selectors.closingHour.value}`);
+            const currentTime = new Date();
 
             if (end < start) {
                 showAlert('Data de fechamento não pode ser menor que a abertura');
+                selectors.closingDate.value = '';
+                selectors.closingHour.value = '';
+                selectors.statusSelect.value = '1';
+                selectors.statusSelect.disabled = true;
+                bloquearBotaoSalvar();
+                return false;
+            }
+            else if (end > currentTime) {
+                showAlert('Data de fechamento não pode ser maior que a hora atual');
                 selectors.closingDate.value = '';
                 selectors.closingHour.value = '';
                 selectors.statusSelect.value = '1';
